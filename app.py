@@ -20,14 +20,19 @@ s3 = boto3.client(
 def home():
     return render_template('upload.html')
 
+
 @app.route('/upload', methods=['POST'])
 def upload():
-    files = request.files.getlist('fotos')
-    for f in files:
-        if f.filename:
-            filename = secure_filename(f.filename)
-            s3.upload_fileobj(f, BUCKET_NAME, filename, ExtraArgs={'ACL': 'public-read'})
-    return redirect('/gallery')
+    try:
+        files = request.files.getlist('fotos')
+        for f in files:
+            if f.filename:
+                filename = secure_filename(f.filename)
+                s3.upload_fileobj(f, BUCKET_NAME, filename, ExtraArgs={'ACL': 'public-read'})
+        return redirect('/gallery')
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
 
 @app.route('/gallery')
 def gallery():
