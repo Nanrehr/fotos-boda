@@ -46,11 +46,13 @@
 </head>
 <body>
   <h1>📸 Sube tus fotos para Mar & JC</h1>
-  <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
-    <input id="fileInput" name="fotos" type="file" accept="image/*" multiple />
+  <form action="/upload" method="POST" enctype="multipart/form-data">
+    <input type="file" name="fotos" id="fileInput" multiple />
     <div class="preview" id="preview"></div>
     <button type="submit">Subir fotos</button>
   </form>
+
+
 
   <script>
     const fileInput = document.getElementById('fileInput');
