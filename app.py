@@ -28,7 +28,7 @@ def upload():
         for f in files:
             if f.filename:
                 filename = secure_filename(f.filename)
-                s3.upload_fileobj(f, BUCKET_NAME, filename, ExtraArgs={'ACL': 'public-read'})
+                s3.upload_fileobj(f, BUCKET_NAME, filename)
         return redirect('/gallery')
     except Exception as e:
         return f"Error: {str(e)}", 500
