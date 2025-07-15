@@ -1,3 +1,4 @@
+<!-- templates/upload.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5,7 +6,7 @@
   <title>Sube tus fotos - Boda Mar & JC</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       text-align: center;
       background: #fff7f7;
       margin: 0;
@@ -45,15 +46,13 @@
 </head>
 <body>
   <h1>📸 Sube tus fotos para Mar & JC</h1>
-  <input id="fileInput" type="file" accept="image/*" multiple />
-  <div class="preview" id="preview"></div>
-  <button onclick="uploadFiles()">Subir fotos</button>
+  <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+    <input id="fileInput" name="fotos" type="file" accept="image/*" multiple />
+    <div class="preview" id="preview"></div>
+    <button type="submit">Subir fotos</button>
+  </form>
 
   <script>
-    const bucketName = 'fotos-boda-mar-jc';
-    const region = 'eu-north-1';
-    const albumUrl = `https://${bucketName}.s3.${region}.amazonaws.com/`;
-
     const fileInput = document.getElementById('fileInput');
     const preview = document.getElementById('preview');
 
@@ -65,37 +64,6 @@
         preview.appendChild(img);
       });
     });
-
-    async function uploadFiles() {
-      const files = fileInput.files;
-      if (!files.length) {
-        alert('Selecciona al menos una foto.');
-        return;
-      }
-
-      for (const file of files) {
-        const fileName = `${Date.now()}-${file.name}`.replaceAll(' ', '_');
-        const uploadUrl = `${albumUrl}${fileName}`;
-
-        try {
-          const res = await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': file.type
-            },
-            body: file
-          });
-
-          if (!res.ok) throw new Error(`Error al subir ${file.name}`);
-        } catch (err) {
-          alert('Error subiendo fotos: ' + err.message);
-          return;
-        }
-      }
-      alert('¡Fotos subidas con éxito! 🎉');
-      fileInput.value = '';
-      preview.innerHTML = '';
-    }
   </script>
 </body>
 </html>
