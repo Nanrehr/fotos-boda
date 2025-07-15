@@ -1,22 +1,397 @@
-<!-- templates/gallery.html -->
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Galería de Fotos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🖼️ Galería - Boda Mar & JC</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #f0f0f0; margin: 0; padding: 2rem; }
-    h1 { color: #333; }
-    .gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 20px; }
-    .gallery img { max-height: 200px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Apple Color Emoji', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      animation: slideDown 0.6s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header-content {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 600px;
+      margin: 0 auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .heart {
+      font-size: 2.5rem;
+      animation: heartbeat 2s ease-in-out infinite;
+      margin-bottom: 1rem;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    h1 {
+      color: #2d3748;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .stats {
+      color: #718096;
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.8);
+      color: #4a5568;
+      border: 2px solid #e2e8f0;
+    }
+
+    .btn-secondary:hover {
+      background: white;
+      border-color: #667eea;
+      transform: translateY(-2px);
+    }
+
+    .gallery-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
+      padding: 0;
+    }
+
+    .photo-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      animation: fadeInUp 0.6s ease-out;
+      animation-fill-mode: both;
+      cursor: pointer;
+    }
+
+    .photo-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .photo-card img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .photo-card:hover img {
+      transform: scale(1.1);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      max-width: 500px;
+      margin: 2rem auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .empty-title {
+      color: #2d3748;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .empty-text {
+      color: #718096;
+      margin-bottom: 2rem;
+    }
+
+    /* Modal para ver fotos en grande */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .modal img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .close {
+      position: absolute;
+      top: 20px;
+      right: 35px;
+      color: white;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 1001;
+    }
+
+    .close:hover {
+      color: #667eea;
+    }
+
+    /* Animaciones escalonadas */
+    .photo-card:nth-child(1) { animation-delay: 0.1s; }
+    .photo-card:nth-child(2) { animation-delay: 0.2s; }
+    .photo-card:nth-child(3) { animation-delay: 0.3s; }
+    .photo-card:nth-child(4) { animation-delay: 0.4s; }
+    .photo-card:nth-child(5) { animation-delay: 0.5s; }
+    .photo-card:nth-child(6) { animation-delay: 0.6s; }
+
+    @media (max-width: 768px) {
+      .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+      }
+      
+      .photo-card img {
+        height: 200px;
+      }
+      
+      .actions {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .btn {
+        width: 100%;
+        max-width: 200px;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+      
+      .header-content {
+        padding: 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+      
+      .photo-card img {
+        height: 150px;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>📸 Galería de Fotos</h1>
-  <div class="gallery">
-    {% for foto in fotos %}
-      <img src="{{ foto }}" alt="foto boda">
-    {% endfor %}
+  <div class="header">
+    <div class="header-content">
+      <div class="heart">💕</div>
+      <h1>Galería de Fotos</h1>
+      <div class="stats">
+        {% if total > 0 %}
+          <strong>{{ total }}</strong> foto{% if total != 1 %}s{% endif %} de la boda
+        {% else %}
+          Aún no hay fotos subidas
+        {% endif %}
+      </div>
+      <div class="actions">
+        <a href="/" class="btn btn-primary">
+          📷 Subir Más Fotos
+        </a>
+        {% if total > 0 %}
+          <button onclick="downloadAll()" class="btn btn-secondary">
+            💾 Descargar Todas
+          </button>
+        {% endif %}
+      </div>
+    </div>
   </div>
+
+  <div class="gallery-container">
+    {% if fotos %}
+      <div class="gallery">
+        {% for foto in fotos %}
+          <div class="photo-card" onclick="openModal('{{ foto }}')">
+            <img src="{{ foto }}" alt="Foto de boda" loading="lazy">
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📸</div>
+        <div class="empty-title">¡Sé el primero!</div>
+        <div class="empty-text">
+          Aún no hay fotos en la galería.<br>
+          ¡Sube las primeras fotos de la boda!
+        </div>
+        <a href="/" class="btn btn-primary">
+          📷 Subir Primeras Fotos
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Modal para ver fotos -->
+  <div id="photoModal" class="modal" onclick="closeModal()">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <div class="modal-content">
+      <img id="modalImg" src="" alt="Foto ampliada">
+    </div>
+  </div>
+
+  <script>
+    function openModal(src) {
+      const modal = document.getElementById('photoModal');
+      const modalImg = document.getElementById('modalImg');
+      modal.style.display = 'block';
+      modalImg.src = src;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('photoModal');
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+
+    // Cerrar modal con ESC
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+
+    // Función para descargar todas (opcional - requiere backend adicional)
+    function downloadAll() {
+      alert('Función de descarga masiva - se puede implementar si necesitas');
+      // Aquí se podría implementar una función para crear un ZIP y descargarlo
+    }
+
+    // Lazy loading mejorado
+    if ('IntersectionObserver' in window) {
+      const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            img.classList.add('loaded');
+            observer.unobserve(img);
+          }
+        });
+      });
+
+      document.querySelectorAll('.photo-card img').forEach(img => {
+        imageObserver.observe(img);
+      });
+    }
+
+    // Actualizar cada 30 segundos para ver nuevas fotos
+    setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        location.reload();
+      }
+    }, 30000);
+  </script>
 </body>
 </html>
