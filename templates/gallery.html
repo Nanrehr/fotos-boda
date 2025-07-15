@@ -1,0 +1,21 @@
+<!-- templates/gallery.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Galería de Fotos</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #f0f0f0; }
+    .gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 20px; }
+    .gallery img { max-height: 200px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+  </style>
+</head>
+<body>
+  <h1>📸 Galería de Fotos</h1>
+  <div class="gallery">
+    {% for foto in fotos %}
+      <img src="{{ foto }}" alt="foto boda">
+    {% endfor %}
+  </div>
+</body>
+</html>
