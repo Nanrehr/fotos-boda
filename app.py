@@ -37,6 +37,3 @@ def gallery():
         for obj in response['Contents']:
             fotos.append(f"https://{BUCKET_NAME}.s3.{REGION_NAME}.amazonaws.com/{obj['Key']}")
     return render_template('gallery.html', fotos=fotos)
-
-if __name__ == '__main__':
-    app.run(debug=True)
