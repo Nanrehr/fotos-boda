@@ -1,8 +1,10 @@
 # app.py
-from flask import Flask, render_template, request, redirect, flash
+from flask import Flask, render_template, request, redirect, flash, send_file
 import boto3
 import os
 from werkzeug.utils import secure_filename
+import zipfile
+import requests
 
 app = Flask(__name__)
 app.secret_key = 'fotos-boda-mar-jc-secret'  # Para flash messages
@@ -95,21 +97,21 @@ def gallery():
         return redirect('/')
         
 
-@app.route('/download-zip', methods=['POST'])
-def download_zip():
-    urls = request.json.get('urls', [])
-    zip_buffer = BytesIO()
-
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for i, url in enumerate(urls, 1):
-            filename = f"foto_{i}.jpg"
-            img_data = requests.get(url).content
-            zip_file.writestr(filename, img_data)
-
-    zip_buffer.seek(0)
-    return send_file(
-        zip_buffer,
-        mimetype='application/zip',
-        as_attachment=True,
-        download_name='Fotos_Boda_M&JC.zip'
-    )
+    @app.route('/download-zip', methods=['POST'])
+    def download_zip():
+        urls = request.json.get('urls', [])
+        zip_buffer = BytesIO()
+    
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for i, url in enumerate(urls, 1):
+                filename = f"foto_{i}.jpg"
+                img_data = requests.get(url).content
+                zip_file.writestr(filename, img_data)
+    
+        zip_buffer.seek(0)
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name='Fotos_Boda_M&JC.zip'
+        )
