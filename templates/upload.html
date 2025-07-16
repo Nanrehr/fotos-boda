@@ -448,14 +448,12 @@
         <a href="/" class="btn btn-primary">
           📷 Subir Más Fotos
         </a>
-        {% if total > 0 %}
           <button onclick="selectAll()" class="btn btn-secondary" id="selectAllBtn">
             ☑️ Seleccionar Todas
           </button>
           <button onclick="downloadSelected()" class="btn btn-secondary" id="downloadBtn" disabled>
             💾 Descargar (<span id="selectedCount">0</span>)
           </button>
-        {% endif %}
       </div>
       
       <div class="selection-info" id="selectionInfo">
