@@ -1,10 +1,12 @@
 # app.py
-from flask import Flask, render_template, request, redirect, flash, send_file
+# app.py
+from flask import Flask, render_template, request, redirect, flash, send_file, jsonify
 import boto3
 import os
 from werkzeug.utils import secure_filename
 import zipfile
 import requests
+from io import BytesIO
 
 app = Flask(__name__)
 app.secret_key = 'fotos-boda-mar-jc-secret'  # Para flash messages
@@ -101,19 +103,27 @@ from io import BytesIO  # Esto también es necesario arriba
 
 @app.route('/download-zip', methods=['POST'])
 def download_zip():
-    urls = request.json.get('urls', [])
-    zip_buffer = BytesIO()
+    try:
+        urls = request.json.get('urls', [])
+        zip_buffer = BytesIO()
 
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for i, url in enumerate(urls, 1):
-            filename = f"foto_{i}.jpg"
-            img_data = requests.get(url).content
-            zip_file.writestr(filename, img_data)
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for i, url in enumerate(urls, 1):
+                filename = f"foto_{i}.jpg"
+                try:
+                    img_data = requests.get(url).content
+                    zip_file.writestr(filename, img_data)
+                except Exception as e:
+                    print(f"Error al descargar {url}: {e}")
 
-    zip_buffer.seek(0)
-    return send_file(
-        zip_buffer,
-        mimetype='application/zip',
-        as_attachment=True,
-        download_name='Fotos_Boda_M&JC.zip'
-    )
+        zip_buffer.seek(0)
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name='Fotos_Boda_M&JC.zip'
+        )
+
+    except Exception as e:
+        print(f"Error al generar el ZIP: {e}")
+        return jsonify({'error': 'No se pudo generar el ZIP'}), 500
