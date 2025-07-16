@@ -2,73 +2,95 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>📷 Subir Fotos - Boda Mar & Juan Carlos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📷 Subir Fotos – Boda Mar & Juan Carlos</title>
+
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 2rem;
-      color: #2d3748;
+    /* ------------- Reset & fondo ------------- */
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:'Segoe UI',sans-serif;
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      min-height:100vh;display:flex;justify-content:center;align-items:center;padding:1.5rem
     }
-    .container {
-      background: rgba(255, 255, 255, 0.95);
-      padding: 2rem;
-      border-radius: 16px;
-      text-align: center;
-      max-width: 500px;
-      width: 100%;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    /* ------------- Tarjeta ------------- */
+    .card{
+      background:rgba(255,255,255,.95);
+      padding:2rem;
+      border-radius:20px;
+      width:100%;max-width:500px;text-align:center;
+      box-shadow:0 15px 35px rgba(0,0,0,.12)
     }
-    h1 {
-      font-size: 1.8rem;
-      margin-bottom: 1rem;
+    h1{font-size:1.9rem;margin:.5rem 0}
+    .heart{font-size:2.5rem;animation:beat 2s infinite both}
+    @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+
+    /* ---------- Input y etiqueta personalizada ---------- */
+    .file-input{display:none}
+    .file-label{
+      display:inline-block;margin:1rem 0;
+      padding:.75rem 1.25rem;border-radius:12px;
+      background:#e2e8f0;color:#4a5568;font-weight:600;
+      cursor:pointer;transition:.3s
     }
-    .heart {
-      font-size: 2rem;
-      animation: heartbeat 2s ease-in-out infinite;
+    .file-label:hover{background:#cbd5e0}
+
+    /* ---------- Botón subir ---------- */
+    button{
+      background:#667eea;color:#fff;border:none;
+      padding:.9rem 2rem;border-radius:12px;
+      font-size:1rem;font-weight:600;cursor:pointer
     }
-    @keyframes heartbeat {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
+
+    /* ---------- Vista previa ---------- */
+    .preview{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+      gap:.5rem;margin:1rem 0 1.5rem;max-height:200px;overflow-y:auto
     }
-    input[type="file"] {
-      margin: 1rem 0;
+    .preview img{
+      width:100%;height:80px;object-fit:cover;border-radius:8px;
+      box-shadow:0 2px 8px rgba(0,0,0,.1);animation:fade .4s both
     }
-    button {
-      padding: 0.75rem 1.5rem;
-      background: #667eea;
-      color: white;
-      font-size: 1rem;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-    }
-    a {
-      display: block;
-      margin-top: 1rem;
-      color: #764ba2;
-      text-decoration: none;
-    }
+    @keyframes fade{from{opacity:0;transform:scale(.8)}to{opacity:1}}
+
+    a{display:block;margin-top:1rem;color:#764ba2;text-decoration:none;font-weight:600}
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="card">
     <div class="heart">💕</div>
     <h1>Fotos de la bodaaa ❤️</h1>
     <p>¡Comparte tus mejores momentos!</p>
 
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-      <input type="file" name="fotos" accept="image/*" multiple required>
-      <br>
+    <form action="/upload" method="POST" enctype="multipart/form-data" id="form">
+      <!-- input oculto -->
+      <input type="file" name="fotos" id="fotos" class="file-input" multiple accept="image/*" required />
+      <!-- etiqueta bonita -->
+      <label for="fotos" class="file-label">📂 Seleccionar fotos</label>
+
+      <!-- vista previa -->
+      <div class="preview" id="preview"></div>
+
       <button type="submit">📤 Subir Fotos</button>
     </form>
 
     <a href="/gallery">🖼️ Ver Galería</a>
   </div>
+
+  <script>
+    const input  = document.getElementById('fotos');
+    const preview= document.getElementById('preview');
+
+    input.addEventListener('change',()=>{          /* genera miniaturas */
+      preview.innerHTML='';
+      [...input.files].forEach(f=>{
+        if(!f.type.startsWith('image/'))return;
+        const img=document.createElement('img');
+        img.src=URL.createObjectURL(f);
+        img.onload=()=>URL.revokeObjectURL(img.src);
+        preview.appendChild(img);
+      });
+    });
+  </script>
 </body>
 </html>
