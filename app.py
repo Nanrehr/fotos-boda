@@ -1,5 +1,4 @@
 # app.py
-# app.py
 from flask import Flask, render_template, request, redirect, flash, send_file, jsonify
 import boto3
 import os
@@ -7,7 +6,10 @@ from werkzeug.utils import secure_filename
 import zipfile
 import requests
 from io import BytesIO
+import threading
+import uuid
 
+zips_generados = {}  # zip_id: BytesIO
 app = Flask(__name__)
 app.secret_key = 'fotos-boda-mar-jc-secret'  # Para flash messages
 
@@ -127,3 +129,48 @@ def download_zip():
     except Exception as e:
         print(f"Error al generar el ZIP: {e}")
         return jsonify({'error': 'No se pudo generar el ZIP'}), 500
+        
+        
+@app.route('/solicitar-zip', methods=['POST'])
+def solicitar_zip():
+    try:
+        urls = request.json.get('urls', [])
+        zip_id = str(uuid.uuid4())
+
+        thread = threading.Thread(target=crear_zip_en_memoria, args=(urls, zip_id))
+        thread.start()
+
+        return jsonify({'zip_id': zip_id})
+    except Exception as e:
+        return jsonify({'error': 'No se pudo preparar el ZIP'}), 500
+        
+@app.route('/download-ready/<zip_id>')
+def download_ready(zip_id):
+    zip_buffer = zips_generados.get(zip_id)
+    if not zip_buffer:
+        return "Todavía se está generando el ZIP o ha expirado.", 404
+
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='Fotos_Boda_M&JC.zip'
+    )
+    
+    
+    
+def crear_zip_en_memoria(urls, zip_id):
+    try:
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for i, url in enumerate(urls, 1):
+                filename = f"foto_{i}.jpg"
+                try:
+                    img_data = requests.get(url).content
+                    zip_file.writestr(filename, img_data)
+                except Exception as e:
+                    print(f"Error descargando {url}: {e}")
+        zip_buffer.seek(0)
+        zips_generados[zip_id] = zip_buffer
+    except Exception as e:
+        print(f"Error en thread ZIP: {e}")
