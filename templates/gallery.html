@@ -2,168 +2,116 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🖼️ Galería - Boda Mar & Juan Carlos</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>🖼️ Galería – Boda Mar & Juan Carlos</title>
+
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 2rem 1rem;
-      margin: 0;
-      color: #2d3748;
+    /* ---------- Fondo & tipografía ---------- */
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:'Segoe UI',sans-serif;
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      padding:2rem 1rem;color:#2d3748
     }
-    .header-content {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 2rem;
-      max-width: 600px;
-      margin: 0 auto 2rem;
-      text-align: center;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+
+    /* ---------- Cabecera ---------- */
+    .header{
+      background:rgba(255,255,255,.95);backdrop-filter:blur(10px);
+      border-radius:20px;padding:2rem;max-width:600px;margin:0 auto 2rem;text-align:center;
+      box-shadow:0 20px 40px rgba(0,0,0,.1)
     }
-    .heart {
-      font-size: 2.5rem;
-      animation: heartbeat 2s ease-in-out infinite;
-      margin-bottom: 1rem;
+    .heart{font-size:2.5rem;animation:beat 2s infinite both;margin-bottom:1rem}
+    @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+    h1{margin-bottom:.5rem}
+
+    /* ---------- Botones ---------- */
+    .actions{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.2rem}
+    .btn{
+      padding:.7rem 1.4rem;border:none;border-radius:12px;font-weight:600;
+      display:inline-flex;align-items:center;gap:.4rem;cursor:pointer;font-size:1rem
     }
-    @keyframes heartbeat {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
+    .btn-primary{background:#667eea;color:#fff}
+    .btn-secondary{background:#fff;border:2px solid #e2e8f0;color:#4a5568}
+    .btn:disabled{background:#ccc;color:#888;cursor:not-allowed}
+
+    /* ---------- Galería ---------- */
+    .gallery{
+      display:grid;gap:.8rem;
+      grid-template-columns:repeat(auto-fill,minmax(48%,1fr)); /* ~2 por fila en móvil */
+      max-width:1000px;margin:0 auto
     }
-    h1 {
-      margin-bottom: 0.5rem;
+    @media(min-width:600px){
+      .gallery{grid-template-columns:repeat(auto-fill,minmax(30%,1fr))} /* 3 en tablets */
     }
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      justify-content: center;
-      margin-top: 1.5rem;
+    .photo{
+      position:relative;border-radius:14px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.08)
     }
-    .btn {
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 12px;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .btn-primary {
-      background: #667eea;
-      color: white;
-    }
-    .btn-secondary {
-      background: white;
-      color: #4a5568;
-      border: 2px solid #e2e8f0;
-    }
-    .btn:disabled {
-      background: #ccc;
-      color: #888;
-      cursor: not-allowed;
-    }
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 1rem;
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-    .photo-card {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      position: relative;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-    }
-    .photo-card img {
-      width: 100%;
-      display: block;
-      height: auto;
-    }
-    .photo-card input[type="checkbox"] {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      width: 24px;
-      height: 24px;
-      z-index: 10;
-    }
+    .photo img{width:100%;height:160px;object-fit:cover;display:block}
+    /* checkbox */
+    .photo input[type=checkbox]{position:absolute;top:10px;left:10px;width:24px;height:24px;z-index:5}
+
   </style>
 </head>
 <body>
-  <div class="header-content">
+  <section class="header">
     <div class="heart">💕</div>
     <h1>Galería de Fotos</h1>
+
     <div class="actions">
       <a href="/" class="btn btn-primary">📷 Subir Más Fotos</a>
-      <button onclick="selectAll()" class="btn btn-secondary" id="selectAllBtn">☑️ Seleccionar Todas</button>
-      <button onclick="downloadSelected()" class="btn btn-secondary" id="downloadBtn" disabled>
-        💾 Descargar (<span id="selectedCount">0</span>)
+      <button class="btn btn-secondary" id="selectAll"   onclick="toggleAll()">☑️ Seleccionar Todas</button>
+      <button class="btn btn-secondary" id="downloadBtn" onclick="download()" disabled>
+        💾 Descargar (<span id="count">0</span>)
       </button>
     </div>
-  </div>
+  </section>
 
-  <div class="gallery">
+  <section class="gallery" id="gallery">
     {% for foto in fotos %}
-      <div class="photo-card" data-url="{{ foto }}">
-        <input type="checkbox" onchange="toggleSelect(this)">
+      <label class="photo" data-url="{{ foto }}">
+        <input type="checkbox" onchange="update(this)">
         <img src="{{ foto }}" alt="Foto de boda">
-      </div>
+      </label>
     {% endfor %}
-  </div>
+  </section>
 
   <script>
-    let selected = new Set();
+    const selected=new Set();
 
-    function toggleSelect(checkbox) {
-      const card = checkbox.closest('.photo-card');
-      const url = card.dataset.url;
-      if (checkbox.checked) {
-        selected.add(url);
-      } else {
-        selected.delete(url);
-      }
-      updateButton();
+    function update(cb){
+      const url=cb.parentElement.dataset.url;
+      cb.checked?selected.add(url):selected.delete(url);
+      document.getElementById('count').textContent=selected.size;
+      document.getElementById('downloadBtn').disabled=selected.size===0;
     }
 
-    function updateButton() {
-      const count = selected.size;
-      document.getElementById('selectedCount').textContent = count;
-      document.getElementById('downloadBtn').disabled = count === 0;
-    }
-
-    function selectAll() {
-      const all = document.querySelectorAll('.photo-card input[type="checkbox"]');
-      const allSelected = selected.size === all.length;
+    function toggleAll(){
+      const boxes=[...document.querySelectorAll('.gallery input[type=checkbox]')];
+      const allSel=selected.size===boxes.length;
       selected.clear();
-      all.forEach(cb => {
-        cb.checked = !allSelected;
-        const url = cb.closest('.photo-card').dataset.url;
-        if (cb.checked) selected.add(url);
+      boxes.forEach(cb=>{
+        cb.checked=!allSel;
+        if(cb.checked)selected.add(cb.parentElement.dataset.url);
       });
-      updateButton();
+      update({checked:false}); // refresca contador/botón
     }
 
-    async function downloadSelected() {
-      for (let url of selected) {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = url.split('/').pop();
+    async function download(){
+      for(const url of selected){
+        const res=await fetch(url);
+        const blob=await res.blob();
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download=url.split('/').pop();
         document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        a.click();a.remove();
         URL.revokeObjectURL(a.href);
       }
+      // limpiar selección
       selected.clear();
-      updateButton();
-      document.querySelectorAll('.photo-card input[type="checkbox"]').forEach(cb => cb.checked = false);
+      document.querySelectorAll('.gallery input[type=checkbox]').forEach(cb=>cb.checked=false);
+      document.getElementById('count').textContent='0';
+      document.getElementById('downloadBtn').disabled=true;
     }
   </script>
 </body>
