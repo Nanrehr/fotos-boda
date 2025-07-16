@@ -97,21 +97,23 @@ def gallery():
         return redirect('/')
         
 
-    @app.route('/download-zip', methods=['POST'])
-    def download_zip():
-        urls = request.json.get('urls', [])
-        zip_buffer = BytesIO()
-    
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for i, url in enumerate(urls, 1):
-                filename = f"foto_{i}.jpg"
-                img_data = requests.get(url).content
-                zip_file.writestr(filename, img_data)
-    
-        zip_buffer.seek(0)
-        return send_file(
-            zip_buffer,
-            mimetype='application/zip',
-            as_attachment=True,
-            download_name='Fotos_Boda_M&JC.zip'
-        )
+from io import BytesIO  # Esto también es necesario arriba
+
+@app.route('/download-zip', methods=['POST'])
+def download_zip():
+    urls = request.json.get('urls', [])
+    zip_buffer = BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for i, url in enumerate(urls, 1):
+            filename = f"foto_{i}.jpg"
+            img_data = requests.get(url).content
+            zip_file.writestr(filename, img_data)
+
+    zip_buffer.seek(0)
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='Fotos_Boda_M&JC.zip'
+    )
