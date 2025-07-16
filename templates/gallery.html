@@ -6,129 +6,136 @@
   <title>🖼️ Galería – Boda Mar & Juan Carlos</title>
 
   <style>
-    /* ---------- Fondo & tipografía ---------- */
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{
-      font-family:'Segoe UI',sans-serif;
-      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-      padding:2rem 1rem;color:#2d3748
+    * {margin: 0; padding: 0; box-sizing: border-box;}
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2rem 1rem;
+      color: #2d3748;
     }
 
-    /* ---------- Cabecera ---------- */
-    .header{
-      background:rgba(255,255,255,.95);backdrop-filter:blur(10px);
-      border-radius:20px;padding:2rem;max-width:600px;margin:0 auto 2rem;text-align:center;
-      box-shadow:0 20px 40px rgba(0,0,0,.1)
+    .header {
+      background: rgba(255,255,255,.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,.1);
     }
-    .heart{font-size:2.5rem;animation:beat 2s infinite both;margin-bottom:1rem}
-    @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
-    h1{margin-bottom:.5rem}
 
-    /* ---------- Botones ---------- */
-    .actions{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1.2rem}
-    .btn{
-      padding:.7rem 1.4rem;border:none;border-radius:12px;font-weight:600;
-      display:inline-flex;align-items:center;gap:.4rem;cursor:pointer;font-size:1rem
-    }
-    .btn-primary{background:#667eea;color:#fff}
-    .btn-secondary{background:#fff;border:2px solid #e2e8f0;color:#4a5568}
-    .btn:disabled{background:#ccc;color:#888;cursor:not-allowed}
+    .heart {font-size: 2.5rem; animation: beat 2s infinite both; margin-bottom: 1rem;}
+    @keyframes beat {0%, 100% {transform: scale(1);} 50% {transform: scale(1.1);}}
+    h1 {margin-bottom: .5rem;}
 
-    /* ---------- Galería ---------- */
-    .gallery{
-      display:grid;gap:.8rem;
-      grid-template-columns:repeat(auto-fill,minmax(48%,1fr)); /* ~2 por fila en móvil */
-      max-width:1000px;margin:0 auto
+    .actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 1.2rem;
     }
-    @media(min-width:600px){
-      .gallery{grid-template-columns:repeat(auto-fill,minmax(30%,1fr))} /* 3 en tablets */
-    }
-    .photo{
-      position:relative;border-radius:14px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.08)
-    }
-    .photo img{width:100%;height:160px;object-fit:cover;display:block}
-    /* checkbox */
-    .photo input[type=checkbox]{position:absolute;top:10px;left:10px;width:24px;height:24px;z-index:5}
 
+    .btn {
+      padding: .7rem 1.4rem;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      cursor: pointer;
+      font-size: 1rem;
+      background: #667eea;
+      color: #fff;
+    }
+
+    .gallery {
+      display: grid;
+      gap: .8rem;
+      grid-template-columns: repeat(auto-fill, minmax(48%, 1fr));
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    @media(min-width: 600px) {
+      .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(30%, 1fr));
+      }
+    }
+
+    .photo {
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 6px 18px rgba(0,0,0,.08);
+      cursor: pointer;
+    }
+
+    .photo img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(255,255,255,0.2);
+    }
+
+    .modal:active {
+      display: none;
+    }
   </style>
 </head>
+
 <body>
   <section class="header">
     <div class="heart">Mar 💕 JC</div>
     <h1>Galería de Fotos</h1>
-
     <div class="actions">
-      <a href="/" class="btn btn-primary">📷 Subir Más Fotos</a>
-      <button class="btn btn-secondary" id="selectAll"   onclick="toggleAll()">☑️ Seleccionar Todas</button>
-      <button class="btn btn-secondary" id="downloadBtn" onclick="download()" disabled>
-        💾 Descargar (<span id="count">0</span>)
-      </button>
+      <a href="/" class="btn">📷 Subir Más Fotos</a>
     </div>
   </section>
 
   <section class="gallery" id="gallery">
     {% for foto in fotos %}
-      <label class="photo" data-url="{{ foto }}">
-        <input type="checkbox" onchange="update(this)">
+      <div class="photo" onclick="verFoto('{{ foto }}')">
         <img src="{{ foto }}" alt="Foto de boda">
-      </label>
+      </div>
     {% endfor %}
   </section>
 
+  <div class="modal" id="modal" onclick="cerrarModal()">
+    <img id="modalImg" src="">
+  </div>
+
   <script>
-    const selected = new Set();
-  
-    function update(cb) {
-      const url = cb.closest('.photo').dataset.url;
-      if (cb.checked) {
-        selected.add(url);
-      } else {
-        selected.delete(url);
-      }
-      document.getElementById('count').textContent = selected.size;
-      document.getElementById('downloadBtn').disabled = selected.size === 0;
-    }
-  
-    function toggleAll() {
-      const checkboxes = document.querySelectorAll('.photo input[type=checkbox]');
-      const allSelected = selected.size === checkboxes.length;
-  
-      selected.clear();
-  
-      checkboxes.forEach(cb => {
-        cb.checked = !allSelected;
-        const url = cb.closest('.photo').dataset.url;
-        if (cb.checked) selected.add(url);
-      });
-  
-      // Actualizar contador y botón
-      document.getElementById('count').textContent = selected.size;
-      document.getElementById('downloadBtn').disabled = selected.size === 0;
-    }
-  
-  async function download() {
-    const urls = [...selected];
-    if (urls.length === 0) return;
-
-    // Paso 1: solicitar el ZIP
-    const response = await fetch('/solicitar-zip', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ urls })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.zip_id) {
-      alert("Error al iniciar la descarga.");
-      return;
+    function verFoto(src) {
+      const modal = document.getElementById('modal');
+      const img = document.getElementById('modalImg');
+      img.src = src;
+      modal.style.display = 'flex';
     }
 
-    const link = document.createElement('a');
-    link.href = `/download-ready/${data.zip_id}`;
-    link.download = "Fotos_Boda_M&JC.zip";
-    link.click();
-  }
+    function cerrarModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
   </script>
 </body>
 </html>
