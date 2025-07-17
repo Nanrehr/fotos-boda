@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, request, redirect, flash, send_file, jsonify
 import boto3
 import os
@@ -8,10 +7,13 @@ import requests
 from io import BytesIO
 import threading
 import uuid
+from datetime import datetime
+import pytz  # AÑADIR EN requirements.txt
 
-zips_generados = {}  # zip_id: BytesIO
+zips_generados = {}
+
 app = Flask(__name__)
-app.secret_key = 'fotos-boda-mar-jc-secret'  # Para flash messages
+app.secret_key = 'fotos-boda-mar-jc-secret'
 
 BUCKET_NAME = os.environ.get('S3_BUCKET_NAME')
 REGION_NAME = os.environ.get('AWS_REGION')
@@ -23,7 +25,6 @@ s3 = boto3.client(
     region_name=REGION_NAME
 )
 
-# Tipos de archivo permitidos
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'heic', 'webp'}
 
 def allowed_file(filename):
@@ -39,25 +40,21 @@ def upload():
         files = request.files.getlist('fotos')
         uploaded_count = 0
         skipped_count = 0
-        
+
         for f in files:
             if f.filename and allowed_file(f.filename):
-                # Mantener nombre original (sin UUID)
                 filename = secure_filename(f.filename)
-                
-                # Verificar si ya existe
                 try:
                     s3.head_object(Bucket=BUCKET_NAME, Key=filename)
-                    skipped_count += 1  # Ya existe, saltar
+                    skipped_count += 1
                     continue
                 except:
-                    pass  # No existe, continuar con la subida
-                
-                # Subir archivo
+                    pass
+
                 file_extension = filename.rsplit('.', 1)[1].lower()
                 s3.upload_fileobj(
-                    f, 
-                    BUCKET_NAME, 
+                    f,
+                    BUCKET_NAME,
                     filename,
                     ExtraArgs={
                         'ContentType': f'image/{file_extension}',
@@ -65,8 +62,7 @@ def upload():
                     }
                 )
                 uploaded_count += 1
-        
-        # Mensaje de éxito
+
         if uploaded_count > 0:
             flash(f'¡Perfecto! Se subieron {uploaded_count} fotos nuevas.', 'success')
             if skipped_count > 0:
@@ -75,34 +71,52 @@ def upload():
             flash(f'Las {skipped_count} fotos ya estaban en la galería.', 'info')
         else:
             flash('No se subieron archivos válidos. Solo se permiten imágenes.', 'error')
-            
+
         return redirect('/gallery')
-            
+
     except Exception as e:
         print(f"Error al subir: {str(e)}")
         flash(f'Error al subir las fotos: {str(e)}', 'error')
         return redirect('/')
 
+# ✅ NUEVA RUTA /gallery ORGANIZADA POR HORAS
 @app.route('/gallery')
 def gallery():
     try:
+        tz = pytz.timezone('Europe/Madrid')
+        segments = [
+            ("PreBoda",        tz.localize(datetime(2025,7,18,0,0)),  tz.localize(datetime(2025,7,19,4,0))),
+            ("PreparaciónBoda",tz.localize(datetime(2025,7,19,4,0)),  tz.localize(datetime(2025,7,19,18,0))),
+            ("Ceremonia",      tz.localize(datetime(2025,7,19,18,0)), tz.localize(datetime(2025,7,19,20,0))),
+            ("Coctel",         tz.localize(datetime(2025,7,19,20,0)), tz.localize(datetime(2025,7,19,21,15))),
+            ("Banquete",       tz.localize(datetime(2025,7,19,21,15)),tz.localize(datetime(2025,7,20,0,30))),
+            ("Fiesta",         tz.localize(datetime(2025,7,20,0,30)), tz.localize(datetime(2025,7,20,6,0))),
+            ("Sin Clasificar", tz.localize(datetime(2025,7,17,0,0)),  tz.localize(datetime(2025,7,21,0,0)))  # fallback
+        ]
+        segmentos = {nombre: [] for nombre, _, _ in segments}
+
         response = s3.list_objects_v2(Bucket=BUCKET_NAME)
-        fotos = []
-        
         if 'Contents' in response:
-            # Ordenar por fecha de modificación (más recientes primero)
-            sorted_objects = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
-            fotos = [f"https://{BUCKET_NAME}.s3.{REGION_NAME}.amazonaws.com/{obj['Key']}" for obj in sorted_objects]
-        
-        return render_template('gallery.html', fotos=fotos, total=len(fotos))
+            for obj in response['Contents']:
+                url = f"https://{BUCKET_NAME}.s3.{REGION_NAME}.amazonaws.com/{obj['Key']}"
+                fecha = obj['LastModified'].astimezone(tz)
+                añadido = False
+                for nombre, inicio, fin in segments[:-1]:  # Excluir el último (fallback) de momento
+                    if inicio <= fecha < fin:
+                        segmentos[nombre].append(url)
+                        añadido = True
+                        break
+                if not añadido:
+                    segmentos["Sin Clasificar"].append(url)
+
+        return render_template('gallery.html', segmentos=segmentos)
+
     except Exception as e:
         print(f"Error al cargar galería: {str(e)}")
         flash(f'Error al cargar la galería: {str(e)}', 'error')
         return redirect('/')
-        
 
-from io import BytesIO  # Esto también es necesario arriba
-
+# (Las rutas de ZIP se mantienen igual)
 @app.route('/download-zip', methods=['POST'])
 def download_zip():
     try:
@@ -125,12 +139,10 @@ def download_zip():
             as_attachment=True,
             download_name='Fotos_Boda_M&JC.zip'
         )
-
     except Exception as e:
         print(f"Error al generar el ZIP: {e}")
         return jsonify({'error': 'No se pudo generar el ZIP'}), 500
-        
-        
+
 @app.route('/solicitar-zip', methods=['POST'])
 def solicitar_zip():
     try:
@@ -143,7 +155,7 @@ def solicitar_zip():
         return jsonify({'zip_id': zip_id})
     except Exception as e:
         return jsonify({'error': 'No se pudo preparar el ZIP'}), 500
-        
+
 @app.route('/download-ready/<zip_id>')
 def download_ready(zip_id):
     zip_buffer = zips_generados.get(zip_id)
@@ -156,9 +168,7 @@ def download_ready(zip_id):
         as_attachment=True,
         download_name='Fotos_Boda_M&JC.zip'
     )
-    
-    
-    
+
 def crear_zip_en_memoria(urls, zip_id):
     try:
         zip_buffer = BytesIO()
