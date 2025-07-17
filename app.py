@@ -9,6 +9,8 @@ import threading
 import uuid
 from datetime import datetime
 import pytz  # AÑADIR EN requirements.txt
+from PIL import Image
+from PIL.ExifTags import TAGS
 
 zips_generados = {}
 
@@ -43,7 +45,25 @@ def upload():
 
         for f in files:
             if f.filename and allowed_file(f.filename):
-                filename = secure_filename(f.filename)
+                
+                from datetime import datetime
+
+filename = secure_filename(f.filename)
+file_extension = filename.rsplit('.', 1)[1].lower()
+exif_date = None
+
+try:
+    img = Image.open(f.stream)
+    exif_data = img._getexif()
+    if exif_data:
+        for tag, value in exif_data.items():
+            decoded = TAGS.get(tag, tag)
+            if decoded == 'DateTimeOriginal':
+                exif_date = datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
+                break
+except Exception as ex:
+    print("No EXIF:", ex)
+                
                 try:
                     s3.head_object(Bucket=BUCKET_NAME, Key=filename)
                     skipped_count += 1
@@ -99,7 +119,15 @@ def gallery():
         if 'Contents' in response:
             for obj in response['Contents']:
                 url = f"https://{BUCKET_NAME}.s3.{REGION_NAME}.amazonaws.com/{obj['Key']}"
-                fecha = obj['LastModified'].astimezone(tz)
+                    
+                    import re
+                     match = re.match(r"(\d{8}_\d{6})_", obj['Key'])
+                     if match:
+                         fecha = datetime.strptime(match.group(1), "%Y%m%d_%H%M%S").astimezone(tz)
+                     else:
+                         fecha = obj['LastModified'].astimezone(tz)
+                                    
+                
                 añadido = False
                 for nombre, inicio, fin in segments[:-1]:  # Excluir el último (fallback) de momento
                     if inicio <= fecha < fin:
