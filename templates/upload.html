@@ -94,6 +94,22 @@
       color: red;
       font-weight: bold;
     }
+    
+  .btn {
+    padding: .7rem 1.4rem;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    cursor: pointer;
+    font-size: 1rem;
+    background: #667eea;
+    color: #fff;
+    margin-top: 1rem;
+    text-decoration: none;
+  }
 
     .flash-info {
       margin-top: 1rem;
@@ -116,6 +132,8 @@
       <div id="preview" class="preview"></div>
 
       <button type="submit" class="boton">📤 Subir Fotos</button>
+      <div> </div>
+      <a href="/gallery" class="btn">🖼️ Ver Galería</a>
     </form>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
