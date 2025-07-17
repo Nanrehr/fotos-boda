@@ -85,15 +85,6 @@ def upload():
                 )
                 uploaded_count += 1
 
-        if uploaded_count > 0:
-            flash(f'¡Perfecto! Se subieron {uploaded_count} fotos nuevas.', 'success')
-            if skipped_count > 0:
-                flash(f'{skipped_count} fotos ya existían y se omitieron.', 'info')
-        elif skipped_count > 0:
-            flash(f'Las {skipped_count} fotos ya estaban en la galería.', 'info')
-        else:
-            flash('No se subieron archivos válidos. Solo se permiten imágenes.', 'error')
-
         return redirect('/gallery')
 
     except Exception as e:
