@@ -5,13 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>📸 Sube tus fotos – Boda Mar & JC</title>
   <style>
-    * {margin: 0; padding: 0; box-sizing: border-box;}
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: url("/static/ADB2413E-1921-4A99-BE54-158BADE708DE.jpeg") no-repeat center center fixed;
+      background-size: cover;
       padding: 2rem 1rem;
       color: #2d3748;
     }
+
     .header {
       background: rgba(255,255,255,.95);
       backdrop-filter: blur(10px);
@@ -22,32 +25,56 @@
       text-align: center;
       box-shadow: 0 20px 40px rgba(0,0,0,.1);
     }
+
     .heart {
       font-size: 2.5rem;
       animation: beat 2s infinite both;
       margin-bottom: 1rem;
     }
-    @keyframes beat {0%, 100% {transform: scale(1);} 50% {transform: scale(1.1);}}
-    h1 {margin-bottom: .5rem;}
+
+    @keyframes beat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    h1 { margin-bottom: .5rem; }
+
     form {
       display: flex;
       flex-direction: column;
       gap: 1rem;
       margin-top: 1.5rem;
     }
+
     .upload-box {
       border: 2px dashed #764ba2;
       padding: 1rem;
       border-radius: 16px;
       background: #f0f0f0;
     }
+
     input[type="file"] {
-      display: block;
-      margin: 0 auto;
-      font-size: 1rem;
-      border: none;
-      background: transparent;
+      opacity: 0;
+      width: 100%;
+      height: 40px;
+      cursor: pointer;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
+
+    .custom-file-label {
+      position: relative;
+      background: #fff;
+      color: #333;
+      font-weight: 500;
+      padding: 0.6rem;
+      border-radius: 8px;
+      text-align: center;
+      border: 2px dashed #764ba2;
+      cursor: pointer;
+    }
+
     .btn {
       padding: .7rem 1.4rem;
       border: none;
@@ -58,15 +85,27 @@
       gap: .4rem;
       cursor: pointer;
       font-size: 1rem;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .btn-primary {
       background: #667eea;
       color: #fff;
-      text-decoration: none;
-      justify-content: center;
     }
-    .btn:disabled {
-      background: #aaa;
+
+    .btn-primary:disabled {
+      background: #ccc;
       cursor: not-allowed;
     }
+
+    .btn-secondary {
+      background: #fff;
+      color: #667eea;
+      border: 2px solid #667eea;
+      margin-top: 1rem;
+    }
+
     .preview {
       display: flex;
       flex-wrap: wrap;
@@ -74,6 +113,7 @@
       margin-top: 1rem;
       gap: 8px;
     }
+
     .preview img {
       width: 60px;
       height: 60px;
@@ -81,11 +121,13 @@
       border-radius: 8px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
+
     .messages {
       margin-top: 1rem;
       text-align: center;
       font-size: 0.95rem;
     }
+
     .success { color: green; }
     .error { color: red; }
     .info { color: #555; }
@@ -97,14 +139,15 @@
     <h1>Sube tus fotos</h1>
 
     <form action="/upload" method="post" enctype="multipart/form-data">
-      <div class="upload-box">
+      <label class="custom-file-label">
+        Seleccionar archivos
         <input type="file" id="fotos" name="fotos" accept="image/*" multiple onchange="mostrarPreview()" />
-      </div>
+      </label>
       <div class="preview" id="preview"></div>
-      <button class="btn" id="btnSubir" type="submit" disabled>🌄 Subir Fotos</button>
+      <button class="btn btn-primary" type="submit" id="btnSubir" disabled>🌄 Subir Fotos</button>
     </form>
-<a> </a>
-    <a href="/gallery" class="btn">🖼️ Ver Galería</a>
+
+    <a href="/gallery" class="btn btn-secondary">🖼️ Ver Galería</a>
 
     <div class="messages">
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -121,11 +164,11 @@
     function mostrarPreview() {
       const input = document.getElementById('fotos');
       const preview = document.getElementById('preview');
-      const btn = document.getElementById('btnSubir');
+      const btnSubir = document.getElementById('btnSubir');
       preview.innerHTML = '';
 
-      if (input.files && input.files.length > 0) {
-        btn.disabled = false;
+      if (input.files.length > 0) {
+        btnSubir.disabled = false;
 
         Array.from(input.files).forEach(file => {
           const reader = new FileReader();
@@ -137,7 +180,7 @@
           reader.readAsDataURL(file);
         });
       } else {
-        btn.disabled = true;
+        btnSubir.disabled = true;
       }
     }
   </script>
