@@ -8,7 +8,7 @@ from io import BytesIO
 import threading
 import uuid
 from datetime import datetime
-import pytz  # AÑADIR EN requirements.txt
+import pytz
 from PIL import Image
 from PIL.ExifTags import TAGS
 import re
@@ -73,7 +73,7 @@ def upload():
                 except:
                     pass
 
-                f.stream.seek(0)  # Reiniciar el puntero antes de subir
+                f.stream.seek(0)
                 s3.upload_fileobj(
                     f,
                     BUCKET_NAME,
@@ -96,18 +96,18 @@ def upload():
 def gallery():
     try:
         tz = pytz.timezone('Europe/Madrid')
-        segments = [
-    ("PrePreBoda",        tz.localize(datetime(2025, 7, 1, 0, 0)),  tz.localize(datetime(2025, 7, 16, 23, 59))),
-    ("PreBoda",           tz.localize(datetime(2025, 7, 17, 0, 0)), tz.localize(datetime(2025, 7, 19, 4, 0))),
-    ("PreparaciónBoda",   tz.localize(datetime(2025, 7, 19, 4, 0)), tz.localize(datetime(2025, 7, 19, 18, 0))),
-    ("Ceremonia",         tz.localize(datetime(2025, 7, 19, 18, 0)), tz.localize(datetime(2025, 7, 19, 20, 0))),
-    ("Coctel",            tz.localize(datetime(2025, 7, 19, 20, 0)), tz.localize(datetime(2025, 7, 19, 21, 15))),
-    ("Banquete",          tz.localize(datetime(2025, 7, 19, 21, 15)),tz.localize(datetime(2025, 7, 20, 0, 30))),
-    ("Fiesta",            tz.localize(datetime(2025, 7, 20, 0, 30)), tz.localize(datetime(2025, 7, 20, 6, 0))),
-    ("Sin Clasificar",    tz.localize(datetime(2025, 7, 1, 0, 0)),   tz.localize(datetime(2025, 7, 21, 0, 0)))  # fallback
-]
+        segmentos_definidos = [
+            ("PrePreBoda",        tz.localize(datetime(2025, 7, 1, 0, 0)),  tz.localize(datetime(2025, 7, 16, 23, 59))),
+            ("PreBoda",           tz.localize(datetime(2025, 7, 17, 0, 0)), tz.localize(datetime(2025, 7, 19, 4, 0))),
+            ("PreparaciónBoda",   tz.localize(datetime(2025, 7, 19, 4, 0)), tz.localize(datetime(2025, 7, 19, 18, 0))),
+            ("Ceremonia",         tz.localize(datetime(2025, 7, 19, 18, 0)), tz.localize(datetime(2025, 7, 19, 20, 0))),
+            ("Coctel",            tz.localize(datetime(2025, 7, 19, 20, 0)), tz.localize(datetime(2025, 7, 19, 21, 15))),
+            ("Banquete",          tz.localize(datetime(2025, 7, 19, 21, 15)),tz.localize(datetime(2025, 7, 20, 0, 30))),
+            ("Fiesta",            tz.localize(datetime(2025, 7, 20, 0, 30)), tz.localize(datetime(2025, 7, 20, 6, 0))),
+        ]
 
-        segmentos = {nombre: [] for nombre, _, _ in segments}
+        fotos_por_categoria = {nombre: [] for nombre, _, _ in segmentos_definidos}
+        fotos_por_categoria["Sin Clasificar"] = []
 
         response = s3.list_objects_v2(Bucket=BUCKET_NAME)
         if 'Contents' in response:
@@ -122,15 +122,16 @@ def gallery():
                     fecha = obj['LastModified'].astimezone(tz)
 
                 añadido = False
-                for nombre, inicio, fin in segments[:-1]:  # Excluir fallback
+                for nombre, inicio, fin in segmentos_definidos:
                     if inicio <= fecha < fin:
-                        segmentos[nombre].append(url)
+                        fotos_por_categoria[nombre].append(url)
                         añadido = True
                         break
-                if not añadido:
-                    segmentos["Sin Clasificar"].append(url)
 
-        return render_template('gallery.html', segmentos=segmentos)
+                if not añadido:
+                    fotos_por_categoria["Sin Clasificar"].append(url)
+
+        return render_template('gallery.html', fotos_por_categoria=fotos_por_categoria)
 
     except Exception as e:
         print(f"Error al cargar galería: {str(e)}")
