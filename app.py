@@ -11,6 +11,7 @@ from datetime import datetime
 import pytz  # AÑADIR EN requirements.txt
 from PIL import Image
 from PIL.ExifTags import TAGS
+import re
 
 zips_generados = {}
 
@@ -45,25 +46,26 @@ def upload():
 
         for f in files:
             if f.filename and allowed_file(f.filename):
-                
-                from datetime import datetime
+                filename = secure_filename(f.filename)
+                file_extension = filename.rsplit('.', 1)[1].lower()
+                exif_date = None
 
-filename = secure_filename(f.filename)
-file_extension = filename.rsplit('.', 1)[1].lower()
-exif_date = None
+                try:
+                    img = Image.open(f.stream)
+                    exif_data = img._getexif()
+                    if exif_data:
+                        for tag, value in exif_data.items():
+                            decoded = TAGS.get(tag, tag)
+                            if decoded == 'DateTimeOriginal':
+                                exif_date = datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
+                                break
+                except Exception as ex:
+                    print("No EXIF:", ex)
 
-try:
-    img = Image.open(f.stream)
-    exif_data = img._getexif()
-    if exif_data:
-        for tag, value in exif_data.items():
-            decoded = TAGS.get(tag, tag)
-            if decoded == 'DateTimeOriginal':
-                exif_date = datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
-                break
-except Exception as ex:
-    print("No EXIF:", ex)
-                
+                if exif_date:
+                    fecha_str = exif_date.strftime("%Y%m%d_%H%M%S")
+                    filename = f"{fecha_str}_{filename}"
+
                 try:
                     s3.head_object(Bucket=BUCKET_NAME, Key=filename)
                     skipped_count += 1
@@ -71,7 +73,7 @@ except Exception as ex:
                 except:
                     pass
 
-                file_extension = filename.rsplit('.', 1)[1].lower()
+                f.stream.seek(0)  # Reiniciar el puntero antes de subir
                 s3.upload_fileobj(
                     f,
                     BUCKET_NAME,
@@ -99,19 +101,18 @@ except Exception as ex:
         flash(f'Error al subir las fotos: {str(e)}', 'error')
         return redirect('/')
 
-# ✅ NUEVA RUTA /gallery ORGANIZADA POR HORAS
 @app.route('/gallery')
 def gallery():
     try:
         tz = pytz.timezone('Europe/Madrid')
         segments = [
-            ("PreBoda",        tz.localize(datetime(2025,7,18,0,0)),  tz.localize(datetime(2025,7,19,4,0))),
-            ("PreparaciónBoda",tz.localize(datetime(2025,7,19,4,0)),  tz.localize(datetime(2025,7,19,18,0))),
-            ("Ceremonia",      tz.localize(datetime(2025,7,19,18,0)), tz.localize(datetime(2025,7,19,20,0))),
-            ("Coctel",         tz.localize(datetime(2025,7,19,20,0)), tz.localize(datetime(2025,7,19,21,15))),
-            ("Banquete",       tz.localize(datetime(2025,7,19,21,15)),tz.localize(datetime(2025,7,20,0,30))),
-            ("Fiesta",         tz.localize(datetime(2025,7,20,0,30)), tz.localize(datetime(2025,7,20,6,0))),
-            ("Sin Clasificar", tz.localize(datetime(2025,7,17,0,0)),  tz.localize(datetime(2025,7,21,0,0)))  # fallback
+            ("PreBoda",         tz.localize(datetime(2025,7,18,0,0)),  tz.localize(datetime(2025,7,19,4,0))),
+            ("PreparaciónBoda", tz.localize(datetime(2025,7,19,4,0)),  tz.localize(datetime(2025,7,19,18,0))),
+            ("Ceremonia",       tz.localize(datetime(2025,7,19,18,0)), tz.localize(datetime(2025,7,19,20,0))),
+            ("Coctel",          tz.localize(datetime(2025,7,19,20,0)), tz.localize(datetime(2025,7,19,21,15))),
+            ("Banquete",        tz.localize(datetime(2025,7,19,21,15)),tz.localize(datetime(2025,7,20,0,30))),
+            ("Fiesta",          tz.localize(datetime(2025,7,20,0,30)), tz.localize(datetime(2025,7,20,6,0))),
+            ("Sin Clasificar",  tz.localize(datetime(2025,7,17,0,0)),  tz.localize(datetime(2025,7,21,0,0)))  # fallback
         ]
         segmentos = {nombre: [] for nombre, _, _ in segments}
 
@@ -119,17 +120,16 @@ def gallery():
         if 'Contents' in response:
             for obj in response['Contents']:
                 url = f"https://{BUCKET_NAME}.s3.{REGION_NAME}.amazonaws.com/{obj['Key']}"
-                    
-                    import re
-                     match = re.match(r"(\d{8}_\d{6})_", obj['Key'])
-                     if match:
-                         fecha = datetime.strptime(match.group(1), "%Y%m%d_%H%M%S").astimezone(tz)
-                     else:
-                         fecha = obj['LastModified'].astimezone(tz)
-                                    
-                
+                key = obj['Key']
+
+                match = re.match(r"(\d{8}_\d{6})_", key)
+                if match:
+                    fecha = datetime.strptime(match.group(1), "%Y%m%d_%H%M%S").astimezone(tz)
+                else:
+                    fecha = obj['LastModified'].astimezone(tz)
+
                 añadido = False
-                for nombre, inicio, fin in segments[:-1]:  # Excluir el último (fallback) de momento
+                for nombre, inicio, fin in segments[:-1]:  # Excluir fallback
                     if inicio <= fecha < fin:
                         segmentos[nombre].append(url)
                         añadido = True
@@ -144,7 +144,6 @@ def gallery():
         flash(f'Error al cargar la galería: {str(e)}', 'error')
         return redirect('/')
 
-# (Las rutas de ZIP se mantienen igual)
 @app.route('/download-zip', methods=['POST'])
 def download_zip():
     try:
