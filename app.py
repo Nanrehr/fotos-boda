@@ -106,14 +106,16 @@ def gallery():
     try:
         tz = pytz.timezone('Europe/Madrid')
         segments = [
-            ("PreBoda",         tz.localize(datetime(2025,7,18,0,0)),  tz.localize(datetime(2025,7,19,4,0))),
-            ("PreparaciónBoda", tz.localize(datetime(2025,7,19,4,0)),  tz.localize(datetime(2025,7,19,18,0))),
-            ("Ceremonia",       tz.localize(datetime(2025,7,19,18,0)), tz.localize(datetime(2025,7,19,20,0))),
-            ("Coctel",          tz.localize(datetime(2025,7,19,20,0)), tz.localize(datetime(2025,7,19,21,15))),
-            ("Banquete",        tz.localize(datetime(2025,7,19,21,15)),tz.localize(datetime(2025,7,20,0,30))),
-            ("Fiesta",          tz.localize(datetime(2025,7,20,0,30)), tz.localize(datetime(2025,7,20,6,0))),
-            ("Sin Clasificar",  tz.localize(datetime(2025,7,17,0,0)),  tz.localize(datetime(2025,7,21,0,0)))  # fallback
-        ]
+    ("PrePreBoda",        tz.localize(datetime(2025, 7, 1, 0, 0)),  tz.localize(datetime(2025, 7, 16, 23, 59))),
+    ("PreBoda",           tz.localize(datetime(2025, 7, 17, 0, 0)), tz.localize(datetime(2025, 7, 19, 4, 0))),
+    ("PreparaciónBoda",   tz.localize(datetime(2025, 7, 19, 4, 0)), tz.localize(datetime(2025, 7, 19, 18, 0))),
+    ("Ceremonia",         tz.localize(datetime(2025, 7, 19, 18, 0)), tz.localize(datetime(2025, 7, 19, 20, 0))),
+    ("Coctel",            tz.localize(datetime(2025, 7, 19, 20, 0)), tz.localize(datetime(2025, 7, 19, 21, 15))),
+    ("Banquete",          tz.localize(datetime(2025, 7, 19, 21, 15)),tz.localize(datetime(2025, 7, 20, 0, 30))),
+    ("Fiesta",            tz.localize(datetime(2025, 7, 20, 0, 30)), tz.localize(datetime(2025, 7, 20, 6, 0))),
+    ("Sin Clasificar",    tz.localize(datetime(2025, 7, 1, 0, 0)),   tz.localize(datetime(2025, 7, 21, 0, 0)))  # fallback
+]
+
         segmentos = {nombre: [] for nombre, _, _ in segments}
 
         response = s3.list_objects_v2(Bucket=BUCKET_NAME)
