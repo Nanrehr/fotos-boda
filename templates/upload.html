@@ -59,22 +59,22 @@
 <body>
   <div class="card">
     <div class="heart">Mar 💕 JC</div>
-    <h1>Fotos de la bodaaa ❤️</h1>
+    <h1>Fotos de la bodaa ❤️</h1>
     <p>¡Comparte tus mejores momentos!</p>
 
     <form action="/upload" method="POST" enctype="multipart/form-data" id="form">
       <!-- input oculto -->
       <input type="file" name="fotos" id="fotos" class="file-input" multiple accept="image/*" required />
       <!-- etiqueta bonita -->
-      <label for="fotos" class="file-label">📂 Seleccionar fotos</label>
+      <label for="fotos" class="file-label">📂 Selecciona tus fotos a subir</label>
 
       <!-- vista previa -->
       <div class="preview" id="preview"></div>
 
-      <button type="submit">📤 Subir Fotos</button>
+      <button type="submit">📤 Clica y sube tus fotos</button>
     </form>
 
-    <a href="/gallery">🖼️ Ver Galería</a>
+    <button type="submit" href="/gallery"> 🖼️ Ver Galería</button>
   </div>
 
   <script>
