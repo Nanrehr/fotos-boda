@@ -1,163 +1,143 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>📸 Subir Fotos - Mar 💕 JC</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>📸 Sube tus fotos – Boda Mar & JC</title>
   <style>
+    * {margin: 0; padding: 0; box-sizing: border-box;}
     body {
       font-family: 'Segoe UI', sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #333;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 1rem;
+      padding: 2rem 1rem;
+      color: #2d3748;
     }
-
-    .container {
-      background: #fff;
+    .header {
+      background: rgba(255,255,255,.95);
+      backdrop-filter: blur(10px);
       border-radius: 20px;
-      padding: 2rem;
-      box-shadow: 0 0 30px rgba(0,0,0,0.2);
-      text-align: center;
-      width: 100%;
+      padding: 2.5rem;
       max-width: 500px;
+      margin: 0 auto 2rem;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,.1);
     }
-
-    h1 {
-      font-size: 1.8rem;
-      margin-bottom: 0.5rem;
-    }
-
-    h2 {
-      font-size: 1.2rem;
-      margin-bottom: 1.5rem;
-      color: #666;
-    }
-
-    .file-label {
-      display: block;
-      border: 2px dashed #764ba2;
-      padding: 1.2rem;
-      border-radius: 12px;
-      cursor: pointer;
+    .heart {
+      font-size: 2.5rem;
+      animation: beat 2s infinite both;
       margin-bottom: 1rem;
-      background: #f9f9f9;
-      transition: background 0.2s;
     }
-
-    .file-label:hover {
-      background: #eee;
+    @keyframes beat {0%, 100% {transform: scale(1);} 50% {transform: scale(1.1);}}
+    h1 {margin-bottom: .5rem;}
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.5rem;
     }
-
-    .file-input {
-      display: none;
+    .upload-box {
+      border: 2px dashed #764ba2;
+      padding: 1rem;
+      border-radius: 16px;
+      background: #f0f0f0;
     }
-
-    .boton {
-      background: #667eea;
-      color: white;
-      padding: 0.8rem 1.5rem;
-      border: none;
-      border-radius: 10px;
+    input[type="file"] {
+      display: block;
+      margin: 0 auto;
       font-size: 1rem;
-      cursor: pointer;
-      margin-top: 0.5rem;
+      border: none;
+      background: transparent;
     }
-
+    .btn {
+      padding: .7rem 1.4rem;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      cursor: pointer;
+      font-size: 1rem;
+      background: #667eea;
+      color: #fff;
+      text-decoration: none;
+      justify-content: center;
+    }
+    .btn:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
     .preview {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 1rem;
       justify-content: center;
+      margin-top: 1rem;
+      gap: 8px;
     }
-
     .preview img {
-      width: 70px;
-      height: 70px;
+      width: 60px;
+      height: 60px;
       object-fit: cover;
       border-radius: 8px;
-      border: 1px solid #ccc;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-
-    .flash-success {
+    .messages {
       margin-top: 1rem;
-      color: green;
-      font-weight: bold;
+      text-align: center;
+      font-size: 0.95rem;
     }
-
-    .flash-error {
-      margin-top: 1rem;
-      color: red;
-      font-weight: bold;
-    }
-    
-  .btn {
-    padding: .7rem 1.4rem;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-    cursor: pointer;
-    font-size: 1rem;
-    background: #667eea;
-    color: #fff;
-    margin-top: 1rem;
-    text-decoration: none;
-  }
-
-    .flash-info {
-      margin-top: 1rem;
-      color: #007bff;
-      font-weight: bold;
-    }
+    .success { color: green; }
+    .error { color: red; }
+    .info { color: #555; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Mar 💕 JC</h1>
-    <h2>Sube tus fotos</h2>
+  <section class="header">
+    <div class="heart">Mar 💕 JC</div>
+    <h1>Sube tus fotos</h1>
 
     <form action="/upload" method="post" enctype="multipart/form-data">
-      <label class="file-label">
-        <input class="file-input" type="file" id="fotos" name="fotos" multiple accept="image/*" onchange="mostrarPreview()">
-        Seleccionar archivos
-      </label>
-
-      <div id="preview" class="preview"></div>
-
-      <button type="submit" class="boton">📤 Subir Fotos</button>
-      <div> </div>
-      <a href="/gallery" class="btn">🖼️ Ver Galería</a>
+      <div class="upload-box">
+        <input type="file" id="fotos" name="fotos" accept="image/*" multiple onchange="mostrarPreview()" />
+      </div>
+      <div class="preview" id="preview"></div>
+      <button class="btn" id="btnSubir" type="submit" disabled>🌄 Subir Fotos</button>
     </form>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="flash-{{ category }}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-  </div>
+    <a href="/gallery" class="btn">🖼️ Ver Galería</a>
+
+    <div class="messages">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <p class="{{ category }}">{{ message }}</p>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+  </section>
 
   <script>
     function mostrarPreview() {
+      const input = document.getElementById('fotos');
       const preview = document.getElementById('preview');
-      const archivos = document.getElementById('fotos').files;
+      const btn = document.getElementById('btnSubir');
       preview.innerHTML = '';
-      for (let i = 0; i < archivos.length; i++) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          preview.appendChild(img);
-        }
-        reader.readAsDataURL(archivos[i]);
+
+      if (input.files && input.files.length > 0) {
+        btn.disabled = false;
+
+        Array.from(input.files).forEach(file => {
+          const reader = new FileReader();
+          reader.onload = e => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            preview.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        });
+      } else {
+        btn.disabled = true;
       }
     }
   </script>
