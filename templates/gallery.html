@@ -4,7 +4,111 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>🖼️ Galería – Boda Mar & Juan Carlos</title>
-  <!-- TU ESTILO AQUÍ (ya lo pusiste bien) -->
+
+  <style>
+    * {margin: 0; padding: 0; box-sizing: border-box;}
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2rem 1rem;
+      color: #2d3748;
+    }
+
+    .header {
+      background: rgba(255,255,255,.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,.1);
+    }
+
+    .heart {font-size: 2.5rem; animation: beat 2s infinite both; margin-bottom: 1rem;}
+    @keyframes beat {0%, 100% {transform: scale(1);} 50% {transform: scale(1.1);}}
+    h1 {margin-bottom: .5rem;}
+
+    .btn {
+      padding: .7rem 1.4rem;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      cursor: pointer;
+      font-size: 1rem;
+      background: #667eea;
+      color: #fff;
+      text-decoration: none;
+      margin-top: 1rem;
+    }
+
+    .bloque {
+      margin-bottom: 3rem;
+    }
+
+    .bloque h2 {
+      margin-bottom: 1rem;
+      color: #fff;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .gallery {
+      display: grid;
+      gap: .8rem;
+      grid-template-columns: repeat(auto-fill, minmax(48%, 1fr));
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    @media(min-width: 600px) {
+      .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(30%, 1fr));
+      }
+    }
+
+    .photo {
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 6px 18px rgba(0,0,0,.08);
+      cursor: pointer;
+    }
+
+    .photo img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(255,255,255,0.2);
+    }
+
+    .modal:active {
+      display: none;
+    }
+  </style>
 </head>
 
 <body>
