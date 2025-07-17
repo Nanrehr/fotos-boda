@@ -96,7 +96,7 @@
     <a href="/" class="btn">📷 Subir Más Fotos</a>
   </section>
 
-  {% for categoria, lista in fotos_por_categoria.items() %}
+  {% for categoria, lista in segmentos.items() %}
     {% if lista %}
       <h2>{{ categoria }}</h2>
       <section class="gallery">
