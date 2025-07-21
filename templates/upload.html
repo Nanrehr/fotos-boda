@@ -48,12 +48,8 @@
       text-align: center;
       border: 2px dashed #764ba2;
       cursor: pointer;
-      display: inline-block;
       margin-bottom: 1rem;
-    }
-
-    .custom-file-label input {
-      display: none;
+      display: block;
     }
 
     .btn {
@@ -73,13 +69,14 @@
     .btn-primary {
       background: #667eea;
       color: #fff;
+      margin-bottom: 1rem;
     }
 
     .btn-secondary {
       background: #fff;
       color: #667eea;
       border: 2px solid #667eea;
-      margin-top: 1rem;
+      margin-top: 0.5rem;
     }
 
     .preview {
@@ -87,6 +84,7 @@
       flex-wrap: wrap;
       justify-content: center;
       margin-top: 1rem;
+      margin-bottom: 1.5rem; /* ✅ SEPARACIÓN CON BOTONES */
       gap: 8px;
     }
 
@@ -116,7 +114,7 @@
 
     <label class="custom-file-label">
       Seleccionar archivos
-      <input type="file" id="fotos" accept="image/*" multiple onchange="mostrarPrevisualizacion()" />
+      <input type="file" id="fotos" accept="image/*" multiple onchange="previsualizar()" />
     </label>
 
     <div class="preview" id="preview"></div>
@@ -128,12 +126,21 @@
   </section>
 
   <script>
-    function mostrarPrevisualizacion() {
+    let archivosSeleccionados = [];
+
+    function previsualizar() {
       const input = document.getElementById('fotos');
       const preview = document.getElementById('preview');
-      preview.innerHTML = '';
+      const mensajes = document.getElementById('mensajes');
 
-      Array.from(input.files).forEach(file => {
+      archivosSeleccionados = Array.from(input.files);
+
+      if (archivosSeleccionados.length > 0) {
+        mensajes.innerHTML = "📤 Dale al botón Subir Fotos para comenzar...";
+      }
+
+      preview.innerHTML = '';
+      archivosSeleccionados.forEach(file => {
         const reader = new FileReader();
         reader.onload = e => {
           const img = document.createElement('img');
@@ -144,34 +151,35 @@
       });
     }
 
-    function subirFotos() {
-      const input = document.getElementById('fotos');
+    async function subirFotos() {
       const mensajes = document.getElementById('mensajes');
-      const files = input.files;
-
-      if (!files.length) {
-        mensajes.innerHTML = '<span class="error">❗Selecciona al menos una foto</span>';
+      if (!archivosSeleccionados.length) {
+        mensajes.innerHTML = "❌ No has seleccionado ninguna foto";
         return;
       }
 
-      const formData = new FormData();
-      Array.from(files).forEach(file => formData.append('fotos', file));
-      mensajes.innerHTML = '<span class="info">⌛ Subiendo fotos...</span>';
+      mensajes.innerHTML = "⌛ Subiendo... puedes cerrar esta ventana si quieres, tardará un poco.";
 
-      fetch('/upload', {
-        method: 'POST',
-        body: formData
-      })
-      .then(res => {
-        if (res.redirected) {
-          window.location.href = res.url;
-        } else {
-          mensajes.innerHTML = '<span class="success">✅ Fotos subidas con éxito</span>';
+      let total = archivosSeleccionados.length;
+      let completadas = 0;
+
+      for (const file of archivosSeleccionados) {
+        const formData = new FormData();
+        formData.append('fotos', file);
+
+        try {
+          await fetch('/upload', {
+            method: 'POST',
+            body: formData
+          });
+        } catch (e) {
+          console.error("Error al subir una imagen", e);
         }
-      })
-      .catch(() => {
-        mensajes.innerHTML = '<span class="error">❌ Error al subir las fotos</span>';
-      });
+
+        completadas++;
+      }
+
+      mensajes.innerHTML = "✅ Fotos subidas. ¡Pulsa en Ver Galería!";
     }
   </script>
 </body>
