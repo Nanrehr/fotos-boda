@@ -102,7 +102,6 @@ def gallery():
             ("Coctel",            tz.localize(datetime(2025, 7, 19, 20, 20, 1)), tz.localize(datetime(2025, 7, 19, 22, 30, 0))),
             ("Banquete",          tz.localize(datetime(2025, 7, 19, 22, 30, 1)), tz.localize(datetime(2025, 7, 20, 3, 0, 0))),
             ("Fiesta",            tz.localize(datetime(2025, 7, 20, 3, 0, 1)), tz.localize(datetime(2025, 7, 20, 10, 0))),
-            ("Resurrección",     tz.localize(datetime(2025, 7, 20, 10, 1)), tz.localize(datetime(2025, 7, 22, 10, 0))),
         ]
 
         fotos_por_categoria = {nombre: [] for nombre, _, _ in segmentos_definidos}
