@@ -1,19 +1,13 @@
-from flask import Flask, render_template, request, redirect, flash, send_file, jsonify
+from flask import Flask, render_template, request, redirect, flash
 import boto3
 import os
 from werkzeug.utils import secure_filename
-import zipfile
-import requests
 from io import BytesIO
-import threading
-import uuid
 from datetime import datetime
 import pytz
 from PIL import Image
 from PIL.ExifTags import TAGS
 import re
-
-zips_generados = {}
 
 app = Flask(__name__)
 app.secret_key = 'fotos-boda-mar-jc-secret'
@@ -91,12 +85,12 @@ def upload():
             uploaded += 1
 
         print(f"Subidas: {uploaded}, Duplicadas: {skipped}")
-        return '', 200  # ✅ Esto permite que fetch reconozca que todo fue bien
+        return '', 200
 
     except Exception as e:
         print(f"Error al subir: {str(e)}")
         return f'Error al subir: {str(e)}', 500
-        
+
 @app.route('/gallery')
 def gallery():
     try:
@@ -104,11 +98,11 @@ def gallery():
         segmentos_definidos = [
             ("PreBoda",           tz.localize(datetime(2025, 7, 1, 0, 0)), tz.localize(datetime(2025, 7, 19, 8, 59))),
             ("PreparaciónBoda",   tz.localize(datetime(2025, 7, 19, 9, 0)), tz.localize(datetime(2025, 7, 19, 18, 40, 0))),
-            ("Ceremonia",         tz.localize(datetime(2025, 7, 19, 18, 41, 1)), tz.localize(datetime(2025, 7, 19, 20, 20, 0))),
+            ("Ceremonia",         tz.localize(datetime(2025, 7, 19, 18, 40, 1)), tz.localize(datetime(2025, 7, 19, 20, 20, 0))),
             ("Coctel",            tz.localize(datetime(2025, 7, 19, 20, 20, 1)), tz.localize(datetime(2025, 7, 19, 22, 30, 0))),
-            ("Banquete",          tz.localize(datetime(2025, 7, 19, 22, 30, 1)),tz.localize(datetime(2025, 7, 20, 3, 0, 0))),
+            ("Banquete",          tz.localize(datetime(2025, 7, 19, 22, 30, 1)), tz.localize(datetime(2025, 7, 20, 3, 0, 0))),
             ("Fiesta",            tz.localize(datetime(2025, 7, 20, 3, 0, 1)), tz.localize(datetime(2025, 7, 20, 10, 0))),
-            ("Resurrección",            tz.localize(datetime(2025, 7, 20, 10, 1)), tz.localize(datetime(2025, 7, 22, 10, 0))),
+            ("Resurrección",     tz.localize(datetime(2025, 7, 20, 10, 1)), tz.localize(datetime(2025, 7, 22, 10, 0))),
         ]
 
         fotos_por_categoria = {nombre: [] for nombre, _, _ in segmentos_definidos}
@@ -122,7 +116,7 @@ def gallery():
 
                 match = re.match(r"(\d{8}_\d{6})_", key)
                 if match:
-                    fecha = datetime.strptime(match.group(1), "%Y%m%d_%H%M%S").astimezone(tz)
+                    fecha = tz.localize(datetime.strptime(match.group(1), "%Y%m%d_%H%M%S"))
                 else:
                     fecha = obj['LastModified'].astimezone(tz)
 
@@ -142,71 +136,3 @@ def gallery():
         print(f"Error al cargar galería: {str(e)}")
         flash(f'Error al cargar la galería: {str(e)}', 'error')
         return redirect('/')
-
-@app.route('/download-zip', methods=['POST'])
-def download_zip():
-    try:
-        urls = request.json.get('urls', [])
-        zip_buffer = BytesIO()
-
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for i, url in enumerate(urls, 1):
-                filename = f"foto_{i}.jpg"
-                try:
-                    img_data = requests.get(url).content
-                    zip_file.writestr(filename, img_data)
-                except Exception as e:
-                    print(f"Error al descargar {url}: {e}")
-
-        zip_buffer.seek(0)
-        return send_file(
-            zip_buffer,
-            mimetype='application/zip',
-            as_attachment=True,
-            download_name='Fotos_Boda_M&JC.zip'
-        )
-    except Exception as e:
-        print(f"Error al generar el ZIP: {e}")
-        return jsonify({'error': 'No se pudo generar el ZIP'}), 500
-
-@app.route('/solicitar-zip', methods=['POST'])
-def solicitar_zip():
-    try:
-        urls = request.json.get('urls', [])
-        zip_id = str(uuid.uuid4())
-
-        thread = threading.Thread(target=crear_zip_en_memoria, args=(urls, zip_id))
-        thread.start()
-
-        return jsonify({'zip_id': zip_id})
-    except Exception as e:
-        return jsonify({'error': 'No se pudo preparar el ZIP'}), 500
-
-@app.route('/download-ready/<zip_id>')
-def download_ready(zip_id):
-    zip_buffer = zips_generados.get(zip_id)
-    if not zip_buffer:
-        return "Todavía se está generando el ZIP o ha expirado.", 404
-
-    return send_file(
-        zip_buffer,
-        mimetype='application/zip',
-        as_attachment=True,
-        download_name='Fotos_Boda_M&JC.zip'
-    )
-
-def crear_zip_en_memoria(urls, zip_id):
-    try:
-        zip_buffer = BytesIO()
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            for i, url in enumerate(urls, 1):
-                filename = f"foto_{i}.jpg"
-                try:
-                    img_data = requests.get(url).content
-                    zip_file.writestr(filename, img_data)
-                except Exception as e:
-                    print(f"Error descargando {url}: {e}")
-        zip_buffer.seek(0)
-        zips_generados[zip_id] = zip_buffer
-    except Exception as e:
-        print(f"Error en thread ZIP: {e}")
