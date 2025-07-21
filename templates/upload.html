@@ -16,7 +16,7 @@
     }
 
     .header {
-      background: rgba(255,255,255,0.7); /* ✅ TRANSPARENTE sin blur */
+      background: rgba(255,255,255,0.85); /* Más opaco para mejor visibilidad */
       border-radius: 20px;
       padding: 2.5rem;
       max-width: 500px;
@@ -48,6 +48,9 @@
       text-align: center;
       border: 2px dashed #764ba2;
       cursor: pointer;
+      margin-bottom: 1rem;
+      display: inline-block;
+      width: 100%;
     }
 
     .btn {
@@ -67,6 +70,7 @@
     .btn-primary {
       background: #667eea;
       color: #fff;
+      margin-top: 1rem;
     }
 
     .btn-secondary {
@@ -110,30 +114,31 @@
 
     <label class="custom-file-label">
       Seleccionar archivos
-      <input type="file" id="fotos" accept="image/*" multiple onchange="subirFotos()" />
+      <input type="file" id="fotos" accept="image/*" multiple onchange="previsualizar()" />
     </label>
+
     <div class="preview" id="preview"></div>
+
+    <button class="btn btn-primary" onclick="subirFotos()">📤 Subir Fotos</button>
+
     <a href="/gallery" class="btn btn-secondary">🖼️ Ver Galería</a>
 
     <div class="messages" id="mensajes"></div>
   </section>
 
   <script>
-    function subirFotos() {
+    let archivosSeleccionados = [];
+
+    function previsualizar() {
       const input = document.getElementById('fotos');
       const preview = document.getElementById('preview');
       const mensajes = document.getElementById('mensajes');
-      const files = input.files;
-
-      if (!files.length) return;
+      archivosSeleccionados = Array.from(input.files);
 
       preview.innerHTML = '';
-      mensajes.innerHTML = '⌛ Subiendo fotos...';
+      mensajes.innerHTML = '';
 
-      const formData = new FormData();
-
-      Array.from(files).forEach((file, index) => {
-        // Previsualización
+      archivosSeleccionados.forEach(file => {
         const reader = new FileReader();
         reader.onload = e => {
           const img = document.createElement('img');
@@ -141,8 +146,21 @@
           preview.appendChild(img);
         };
         reader.readAsDataURL(file);
+      });
+    }
 
-        // Subida individual
+    function subirFotos() {
+      const mensajes = document.getElementById('mensajes');
+
+      if (archivosSeleccionados.length === 0) {
+        mensajes.innerHTML = '<span class="error">❗️ No has seleccionado fotos</span>';
+        return;
+      }
+
+      mensajes.innerHTML = '⌛ Subiendo fotos...';
+
+      let subidas = 0;
+      archivosSeleccionados.forEach((file, index) => {
         const individualForm = new FormData();
         individualForm.append('fotos', file);
 
@@ -150,11 +168,12 @@
           method: 'POST',
           body: individualForm
         }).then(() => {
-          if (index === files.length - 1) {
-            mensajes.innerHTML = '✅ Fotos subidas con éxito';
+          subidas++;
+          if (subidas === archivosSeleccionados.length) {
+            mensajes.innerHTML = '<span class="success">✅ Todas las fotos se han subido</span>';
           }
         }).catch(() => {
-          mensajes.innerHTML = '❌ Error al subir alguna foto';
+          mensajes.innerHTML = '<span class="error">❌ Error al subir alguna foto</span>';
         });
       });
     }
