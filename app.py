@@ -40,57 +40,57 @@ def home():
 @app.route('/upload', methods=['POST'])
 def upload():
     try:
-        files = request.files.getlist('fotos')
-        uploaded_count = 0
-        skipped_count = 0
+        # ✅ Usamos directamente el archivo individual enviado por fetch()
+        if 'fotos' not in request.files:
+            return 'No se recibió ningún archivo', 400
 
-        for f in files:
-            if f.filename and allowed_file(f.filename):
-                filename = secure_filename(f.filename)
-                file_extension = filename.rsplit('.', 1)[1].lower()
-                exif_date = None
+        f = request.files['fotos']
+        if not f.filename or not allowed_file(f.filename):
+            return 'Archivo no permitido', 400
 
-                try:
-                    img = Image.open(f.stream)
-                    exif_data = img._getexif()
-                    if exif_data:
-                        for tag, value in exif_data.items():
-                            decoded = TAGS.get(tag, tag)
-                            if decoded == 'DateTimeOriginal':
-                                exif_date = datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
-                                break
-                except Exception as ex:
-                    print("No EXIF:", ex)
+        filename = secure_filename(f.filename)
+        file_extension = filename.rsplit('.', 1)[1].lower()
+        exif_date = None
 
-                if exif_date:
-                    fecha_str = exif_date.strftime("%Y%m%d_%H%M%S")
-                    filename = f"{fecha_str}_{filename}"
+        try:
+            img = Image.open(f.stream)
+            exif_data = img._getexif()
+            if exif_data:
+                for tag, value in exif_data.items():
+                    decoded = TAGS.get(tag, tag)
+                    if decoded == 'DateTimeOriginal':
+                        exif_date = datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
+                        break
+        except Exception as ex:
+            print("No EXIF:", ex)
 
-                try:
-                    s3.head_object(Bucket=BUCKET_NAME, Key=filename)
-                    skipped_count += 1
-                    continue
-                except:
-                    pass
+        if exif_date:
+            fecha_str = exif_date.strftime("%Y%m%d_%H%M%S")
+            filename = f"{fecha_str}_{filename}"
 
-                f.stream.seek(0)
-                s3.upload_fileobj(
-                    f,
-                    BUCKET_NAME,
-                    filename,
-                    ExtraArgs={
-                        'ContentType': f'image/{file_extension}',
-                        'CacheControl': 'max-age=86400'
-                    }
-                )
-                uploaded_count += 1
+        # Verifica si ya existe en el bucket
+        try:
+            s3.head_object(Bucket=BUCKET_NAME, Key=filename)
+            return 'Ya existe', 200
+        except:
+            pass
 
-        return redirect('/gallery')
+        f.stream.seek(0)
+        s3.upload_fileobj(
+            f,
+            BUCKET_NAME,
+            filename,
+            ExtraArgs={
+                'ContentType': f'image/{file_extension}',
+                'CacheControl': 'max-age=86400'
+            }
+        )
+
+        return 'Subida correcta', 200
 
     except Exception as e:
         print(f"Error al subir: {str(e)}")
-        flash(f'Error al subir las fotos: {str(e)}', 'error')
-        return redirect('/')
+        return f'Error al subir: {str(e)}', 500
 
 @app.route('/gallery')
 def gallery():
