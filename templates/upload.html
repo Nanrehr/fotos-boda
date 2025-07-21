@@ -16,7 +16,7 @@
     }
 
     .header {
-      background: rgba(255,255,255,0.85); /* Más opaco para mejor visibilidad */
+      background: rgba(255,255,255,0.7);
       border-radius: 20px;
       padding: 2.5rem;
       max-width: 500px;
@@ -48,9 +48,12 @@
       text-align: center;
       border: 2px dashed #764ba2;
       cursor: pointer;
-      margin-bottom: 1rem;
       display: inline-block;
-      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    .custom-file-label input {
+      display: none;
     }
 
     .btn {
@@ -70,7 +73,6 @@
     .btn-primary {
       background: #667eea;
       color: #fff;
-      margin-top: 1rem;
     }
 
     .btn-secondary {
@@ -114,31 +116,24 @@
 
     <label class="custom-file-label">
       Seleccionar archivos
-      <input type="file" id="fotos" accept="image/*" multiple onchange="previsualizar()" />
+      <input type="file" id="fotos" accept="image/*" multiple onchange="mostrarPrevisualizacion()" />
     </label>
 
     <div class="preview" id="preview"></div>
 
-    <button class="btn btn-primary" onclick="subirFotos()">📤 Subir Fotos</button>
-
+    <button class="btn btn-primary" onclick="subirFotos()">⬆️ Subir Fotos</button>
     <a href="/gallery" class="btn btn-secondary">🖼️ Ver Galería</a>
 
     <div class="messages" id="mensajes"></div>
   </section>
 
   <script>
-    let archivosSeleccionados = [];
-
-    function previsualizar() {
+    function mostrarPrevisualizacion() {
       const input = document.getElementById('fotos');
       const preview = document.getElementById('preview');
-      const mensajes = document.getElementById('mensajes');
-      archivosSeleccionados = Array.from(input.files);
-
       preview.innerHTML = '';
-      mensajes.innerHTML = '';
 
-      archivosSeleccionados.forEach(file => {
+      Array.from(input.files).forEach(file => {
         const reader = new FileReader();
         reader.onload = e => {
           const img = document.createElement('img');
@@ -150,31 +145,32 @@
     }
 
     function subirFotos() {
+      const input = document.getElementById('fotos');
       const mensajes = document.getElementById('mensajes');
+      const files = input.files;
 
-      if (archivosSeleccionados.length === 0) {
-        mensajes.innerHTML = '<span class="error">❗️ No has seleccionado fotos</span>';
+      if (!files.length) {
+        mensajes.innerHTML = '<span class="error">❗Selecciona al menos una foto</span>';
         return;
       }
 
-      mensajes.innerHTML = '⌛ Subiendo fotos...';
+      const formData = new FormData();
+      Array.from(files).forEach(file => formData.append('fotos', file));
+      mensajes.innerHTML = '<span class="info">⌛ Subiendo fotos...</span>';
 
-      let subidas = 0;
-      archivosSeleccionados.forEach((file, index) => {
-        const individualForm = new FormData();
-        individualForm.append('fotos', file);
-
-        fetch('/upload', {
-          method: 'POST',
-          body: individualForm
-        }).then(() => {
-          subidas++;
-          if (subidas === archivosSeleccionados.length) {
-            mensajes.innerHTML = '<span class="success">✅ Todas las fotos se han subido</span>';
-          }
-        }).catch(() => {
-          mensajes.innerHTML = '<span class="error">❌ Error al subir alguna foto</span>';
-        });
+      fetch('/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => {
+        if (res.redirected) {
+          window.location.href = res.url;
+        } else {
+          mensajes.innerHTML = '<span class="success">✅ Fotos subidas con éxito</span>';
+        }
+      })
+      .catch(() => {
+        mensajes.innerHTML = '<span class="error">❌ Error al subir las fotos</span>';
       });
     }
   </script>
