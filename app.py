@@ -105,7 +105,6 @@ def gallery():
         ]
 
         fotos_por_categoria = {nombre: [] for nombre, _, _ in segmentos_definidos}
-        fotos_por_categoria["Sin Clasificar"] = []
 
         response = s3.list_objects_v2(Bucket=BUCKET_NAME)
         if 'Contents' in response:
@@ -119,15 +118,10 @@ def gallery():
                 else:
                     fecha = obj['LastModified'].astimezone(tz)
 
-                añadido = False
                 for nombre, inicio, fin in segmentos_definidos:
                     if inicio <= fecha < fin:
                         fotos_por_categoria[nombre].append(url)
-                        añadido = True
-                        break
-
-                if not añadido:
-                    fotos_por_categoria["Sin Clasificar"].append(url)
+                        break  # ✅ No añadimos a "Sin Clasificar" si no encaja
 
         return render_template('gallery.html', fotos_por_categoria=fotos_por_categoria)
 
