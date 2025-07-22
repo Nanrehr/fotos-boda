@@ -1,4 +1,3 @@
-<!-- gallery.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,38 +5,133 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>🖼️ Galería – Boda Mar & Juan Carlos</title>
   <style>
-    /* estilos omitidos para brevedad, usa los que ya tienes */
-    .categorias {
-      text-align: center;
-      margin-bottom: 2rem;
-      flex-wrap: wrap;
-      display: flex;
-      justify-content: center;
-      gap: 0.8rem;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: url("/static/fondo-boda.jpg") no-repeat center center fixed;
+      background-size: cover;
+      padding: 2rem 1rem;
+      color: #2d3748;
     }
-    .categorias button {
-      padding: 0.5rem 1rem;
+
+    .header {
+      background: rgba(255,255,255,0.7);
       border-radius: 20px;
+      padding: 2rem;
+      max-width: 600px;
+      margin: 0 auto 1.5rem;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,.1);
+    }
+
+    .heart {
+      font-size: 2.5rem;
+      animation: beat 2s infinite both;
+      margin-bottom: 1rem;
+    }
+
+    @keyframes beat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    h1 { margin-bottom: .5rem; }
+
+    .btn {
+      padding: .7rem 1.4rem;
       border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      cursor: pointer;
+      font-size: 1rem;
+      background: #667eea;
+      color: #fff;
+      margin-top: 1rem;
+      text-decoration: none;
+    }
+
+    .category-buttons {
+      text-align: center;
+      margin-top: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .category-buttons button {
       background: #764ba2;
       color: white;
-      font-weight: bold;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin: 0.2rem;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+
+    .gallery {
+      display: grid;
+      gap: .8rem;
+      grid-template-columns: repeat(auto-fill, minmax(48%, 1fr));
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    @media(min-width: 600px) {
+      .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(30%, 1fr));
+      }
+    }
+
+    .photo {
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 6px 18px rgba(0,0,0,.08);
       cursor: pointer;
     }
-    .categorias button.active {
-      background: #667eea;
+
+    .photo img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
     }
+
     .pagination {
       text-align: center;
       margin-top: 1.5rem;
     }
+
     .pagination button {
-      padding: 0.4rem 0.8rem;
-      margin: 0 0.4rem;
+      margin: 0 4px;
+      padding: 0.4rem 0.9rem;
+      border-radius: 10px;
       border: none;
-      border-radius: 8px;
-      background: #ccc;
+      background: #667eea;
+      color: white;
       cursor: pointer;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(255,255,255,0.2);
     }
   </style>
 </head>
@@ -46,99 +140,73 @@
     <div class="heart">Mar 💕 JC</div>
     <h1>Galería de Fotos</h1>
     <a href="/" class="btn">📷 Subir Más Fotos</a>
+    <div class="category-buttons">
+      {% for categoria, lista in fotos_por_categoria.items() if lista %}
+        <button onclick="mostrarCategoria('{{ categoria }}')">{{ categoria }}</button>
+      {% endfor %}
+    </div>
   </section>
 
-  <div class="categorias" id="categorias"></div>
-  <section class="gallery" id="galeria"></section>
-  <div class="pagination" id="paginacion"></div>
+  {% for categoria, lista in fotos_por_categoria.items() %}
+    {% if lista %}
+      <section class="gallery" id="cat-{{ categoria }}" style="display:none;">
+        {% for foto in lista %}
+          <div class="photo">
+            <img src="{{ foto }}" alt="Foto de boda" onclick="verFoto('{{ foto }}')">
+          </div>
+        {% endfor %}
+      </section>
+    {% endif %}
+  {% endfor %}
+
+  <div class="pagination" id="pagination"></div>
 
   <div class="modal" id="modal" onclick="cerrarModal()">
     <img id="modalImg" src="">
   </div>
 
-  <!-- JSON embebido -->
   <script>
-    const fotosPorCategoria = {{ fotos_por_categoria | tojson }};
-  </script>
-
-  <script>
-    let categoriaActual = "";
+    let fotosPorPagina = 6;
     let paginaActual = 1;
-    const fotosPorPagina = 6;
+    let categoriaActual = "";
+    let todasFotos = [];
 
-    const galeria = document.getElementById("galeria");
-    const categoriasDiv = document.getElementById("categorias");
-    const paginacion = document.getElementById("paginacion");
+    function mostrarCategoria(cat) {
+      document.querySelectorAll('.gallery').forEach(g => g.style.display = 'none');
+      const galeria = document.getElementById('cat-' + cat);
+      if (!galeria) return;
 
-    const categorias = Object.keys(fotosPorCategoria).filter(cat => fotosPorCategoria[cat].length > 0);
+      categoriaActual = cat;
+      paginaActual = 1;
 
-    function mostrarCategorias() {
-      categoriasDiv.innerHTML = '';
-      categorias.forEach(cat => {
-        const btn = document.createElement("button");
-        btn.textContent = cat;
-        btn.onclick = () => {
-          categoriaActual = cat;
-          paginaActual = 1;
-          actualizarGaleria();
-          actualizarCategorias();
-        };
-        if (cat === categoriaActual) btn.classList.add("active");
-        categoriasDiv.appendChild(btn);
-      });
-    }
-
-    function actualizarCategorias() {
-      [...categoriasDiv.children].forEach(btn => {
-        btn.classList.toggle("active", btn.textContent === categoriaActual);
-      });
-    }
-
-    function actualizarGaleria() {
+      // Obtener todas las fotos de la categoría
+      todasFotos = Array.from(galeria.querySelectorAll('.photo'));
       galeria.innerHTML = '';
-      const fotos = fotosPorCategoria[categoriaActual] || [];
-      const inicio = (paginaActual - 1) * fotosPorPagina;
-      const paginadas = fotos.slice(inicio, inicio + fotosPorPagina);
+      galeria.style.display = 'grid';
 
-      paginadas.forEach(foto => {
-        const div = document.createElement("div");
-        div.className = "photo";
-        div.onclick = () => verFoto(foto);
-        div.innerHTML = `<img src="${foto}" alt="Foto de boda">`;
-        galeria.appendChild(div);
-      });
-
-      actualizarPaginacion(fotos.length);
+      mostrarPagina();
     }
 
-    function actualizarPaginacion(total) {
-      paginacion.innerHTML = '';
-      const totalPaginas = Math.ceil(total / fotosPorPagina);
+    function mostrarPagina() {
+      const galeria = document.getElementById('cat-' + categoriaActual);
+      galeria.innerHTML = '';
 
-      if (totalPaginas <= 1) return;
+      const inicio = (paginaActual - 1) * fotosPorPagina;
+      const fin = inicio + fotosPorPagina;
+      const fotosPagina = todasFotos.slice(inicio, fin);
 
-      if (paginaActual > 1) {
-        const prev = document.createElement("button");
-        prev.textContent = "◀️";
-        prev.onclick = () => {
-          paginaActual--;
-          actualizarGaleria();
-        };
-        paginacion.appendChild(prev);
-      }
+      fotosPagina.forEach(f => galeria.appendChild(f));
 
-      const info = document.createElement("span");
-      info.textContent = `Página ${paginaActual} de ${totalPaginas}`;
-      paginacion.appendChild(info);
+      // Paginación
+      const totalPaginas = Math.ceil(todasFotos.length / fotosPorPagina);
+      const paginador = document.getElementById('pagination');
+      paginador.innerHTML = '';
 
-      if (paginaActual < totalPaginas) {
-        const next = document.createElement("button");
-        next.textContent = "▶️";
-        next.onclick = () => {
-          paginaActual++;
-          actualizarGaleria();
-        };
-        paginacion.appendChild(next);
+      for (let i = 1; i <= totalPaginas; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.onclick = () => { paginaActual = i; mostrarPagina(); };
+        paginador.appendChild(btn);
       }
     }
 
@@ -153,10 +221,11 @@
       document.getElementById('modal').style.display = 'none';
     }
 
-    // Inicializar con primera categoría
-    categoriaActual = categorias[0];
-    mostrarCategorias();
-    actualizarGaleria();
+    // Cargar primera categoría al entrar
+    window.onload = () => {
+      const primero = document.querySelector('.category-buttons button');
+      if (primero) primero.click();
+    }
   </script>
 </body>
 </html>
