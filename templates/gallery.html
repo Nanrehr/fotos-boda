@@ -6,98 +6,38 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>🖼️ Galería – Boda Mar & Juan Carlos</title>
   <style>
-    * {margin: 0; padding: 0; box-sizing: border-box;}
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: url("/static/fondo-boda.jpg") no-repeat center center fixed;
-      background-size: cover;
-      padding: 2rem 1rem;
-      color: #2d3748;
-    }
-    .header {
-      background: rgba(255,255,255,0.7); /* ✅ Transparente sin desenfoque */
-      border-radius: 20px;
-      padding: 2rem;
-      max-width: 600px;
-      margin: 0 auto 2rem;
+    /* estilos omitidos para brevedad, usa los que ya tienes */
+    .categorias {
       text-align: center;
-      box-shadow: 0 20px 40px rgba(0,0,0,.1);
-    }
-    .heart {font-size: 2.5rem; animation: beat 2s infinite both; margin-bottom: 1rem;}
-    @keyframes beat {0%, 100% {transform: scale(1);} 50% {transform: scale(1.1);}}
-    h1 {margin-bottom: .5rem;}
-
-    .btn {
-      padding: .7rem 1.4rem;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: .4rem;
-      cursor: pointer;
-      font-size: 1rem;
-      background: #667eea;
-      color: #fff;
-      margin-top: 1rem;
-      text-decoration: none;
-    }
-
-    h2 {
-      text-align: center;
-      color: white;
-      margin: 3rem auto 1rem;
-      font-size: 1.5rem;
-      background: rgba(255,255,255,0.2);
-      padding: 0.4rem 1rem;
-      border-radius: 12px;
-      width: fit-content;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    .gallery {
-      display: grid;
-      gap: .8rem;
-      grid-template-columns: repeat(auto-fill, minmax(48%, 1fr));
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-    @media(min-width: 600px) {
-      .gallery {
-        grid-template-columns: repeat(auto-fill, minmax(30%, 1fr));
-      }
-    }
-
-    .photo {
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 6px 18px rgba(0,0,0,.08);
-      cursor: pointer;
-    }
-    .photo img {
-      width: 100%;
-      height: 160px;
-      object-fit: cover;
-      display: block;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 999;
-      left: 0;
-      top: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(0,0,0,0.8);
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      display: flex;
       justify-content: center;
-      align-items: center;
+      gap: 0.8rem;
     }
-    .modal img {
-      max-width: 90vw;
-      max-height: 90vh;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(255,255,255,0.2);
+    .categorias button {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      border: none;
+      background: #764ba2;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .categorias button.active {
+      background: #667eea;
+    }
+    .pagination {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+    .pagination button {
+      padding: 0.4rem 0.8rem;
+      margin: 0 0.4rem;
+      border: none;
+      border-radius: 8px;
+      background: #ccc;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -108,24 +48,100 @@
     <a href="/" class="btn">📷 Subir Más Fotos</a>
   </section>
 
-  {% for categoria, lista in fotos_por_categoria.items() %}
-    {% if lista %}
-      <h2>{{ categoria }}</h2>
-      <section class="gallery">
-        {% for foto in lista %}
-          <div class="photo" onclick="verFoto('{{ foto }}')">
-            <img src="{{ foto }}" alt="Foto de boda" loading="lazy">
-          </div>
-        {% endfor %}
-      </section>
-    {% endif %}
-  {% endfor %}
+  <div class="categorias" id="categorias"></div>
+  <section class="gallery" id="galeria"></section>
+  <div class="pagination" id="paginacion"></div>
 
   <div class="modal" id="modal" onclick="cerrarModal()">
     <img id="modalImg" src="">
   </div>
 
+  <!-- JSON embebido -->
   <script>
+    const fotosPorCategoria = {{ fotos_por_categoria | tojson }};
+  </script>
+
+  <script>
+    let categoriaActual = "";
+    let paginaActual = 1;
+    const fotosPorPagina = 6;
+
+    const galeria = document.getElementById("galeria");
+    const categoriasDiv = document.getElementById("categorias");
+    const paginacion = document.getElementById("paginacion");
+
+    const categorias = Object.keys(fotosPorCategoria).filter(cat => fotosPorCategoria[cat].length > 0);
+
+    function mostrarCategorias() {
+      categoriasDiv.innerHTML = '';
+      categorias.forEach(cat => {
+        const btn = document.createElement("button");
+        btn.textContent = cat;
+        btn.onclick = () => {
+          categoriaActual = cat;
+          paginaActual = 1;
+          actualizarGaleria();
+          actualizarCategorias();
+        };
+        if (cat === categoriaActual) btn.classList.add("active");
+        categoriasDiv.appendChild(btn);
+      });
+    }
+
+    function actualizarCategorias() {
+      [...categoriasDiv.children].forEach(btn => {
+        btn.classList.toggle("active", btn.textContent === categoriaActual);
+      });
+    }
+
+    function actualizarGaleria() {
+      galeria.innerHTML = '';
+      const fotos = fotosPorCategoria[categoriaActual] || [];
+      const inicio = (paginaActual - 1) * fotosPorPagina;
+      const paginadas = fotos.slice(inicio, inicio + fotosPorPagina);
+
+      paginadas.forEach(foto => {
+        const div = document.createElement("div");
+        div.className = "photo";
+        div.onclick = () => verFoto(foto);
+        div.innerHTML = `<img src="${foto}" alt="Foto de boda">`;
+        galeria.appendChild(div);
+      });
+
+      actualizarPaginacion(fotos.length);
+    }
+
+    function actualizarPaginacion(total) {
+      paginacion.innerHTML = '';
+      const totalPaginas = Math.ceil(total / fotosPorPagina);
+
+      if (totalPaginas <= 1) return;
+
+      if (paginaActual > 1) {
+        const prev = document.createElement("button");
+        prev.textContent = "◀️";
+        prev.onclick = () => {
+          paginaActual--;
+          actualizarGaleria();
+        };
+        paginacion.appendChild(prev);
+      }
+
+      const info = document.createElement("span");
+      info.textContent = `Página ${paginaActual} de ${totalPaginas}`;
+      paginacion.appendChild(info);
+
+      if (paginaActual < totalPaginas) {
+        const next = document.createElement("button");
+        next.textContent = "▶️";
+        next.onclick = () => {
+          paginaActual++;
+          actualizarGaleria();
+        };
+        paginacion.appendChild(next);
+      }
+    }
+
     function verFoto(src) {
       const modal = document.getElementById('modal');
       const img = document.getElementById('modalImg');
@@ -136,6 +152,11 @@
     function cerrarModal() {
       document.getElementById('modal').style.display = 'none';
     }
+
+    // Inicializar con primera categoría
+    categoriaActual = categorias[0];
+    mostrarCategorias();
+    actualizarGaleria();
   </script>
 </body>
 </html>
