@@ -38,10 +38,6 @@
 
     h1 { margin-bottom: .5rem; }
 
-    input[type="file"] {
-      display: none;
-    }
-
     .custom-file-label {
       position: relative;
       background: #fff;
@@ -54,6 +50,10 @@
       cursor: pointer;
       margin-bottom: 1rem;
       display: block;
+    }
+
+    .custom-file-label input {
+      display: none;
     }
 
     .btn {
@@ -117,8 +117,8 @@
     <h1>Sube tus fotos</h1>
 
     <label class="custom-file-label">
-      1° Seleccionar archivos
-      <input type="file" id="fotos" accept="image/*" multiple onchange="previsualizar()" />
+     📂 1° Seleccionar archivos
+      <input type="file" id="fotos" name="fotos" accept="image/*" multiple onchange="previsualizar()" />
     </label>
 
     <div class="preview" id="preview"></div>
@@ -167,20 +167,25 @@
       let total = archivosSeleccionados.length;
       let completadas = 0;
 
-      for (const file of archivosSeleccionados) {
+      for (const [i, file] of archivosSeleccionados.entries()) {
         const formData = new FormData();
         formData.append('fotos', file);
 
         try {
-          await fetch('/upload', {
+          const res = await fetch('/upload', {
             method: 'POST',
             body: formData
           });
+
+          if (!res.ok) {
+            console.error("Falló la subida de una imagen:", file.name);
+          }
         } catch (e) {
-          console.error("Error al subir una imagen", e);
+          console.error("Error de red al subir una imagen:", file.name, e);
         }
 
         completadas++;
+        mensajes.innerHTML = `📤 Subiendo foto ${completadas} de ${total}...`;
       }
 
       mensajes.innerHTML = "✅ Fotos subidas. ¡Pulsa en Ver Galería!";
