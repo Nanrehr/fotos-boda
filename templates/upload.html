@@ -167,26 +167,25 @@
       let total = archivosSeleccionados.length;
       let completadas = 0;
 
-      for (const [i, file] of archivosSeleccionados.entries()) {
+      const subidas = archivosSeleccionados.map((file) => {
         const formData = new FormData();
         formData.append('fotos', file);
 
-        try {
-          const res = await fetch('/upload', {
-            method: 'POST',
-            body: formData
-          });
+        return fetch('/upload', {
+          method: 'POST',
+          body: formData
+        })
+        .then(res => {
+          if (!res.ok) throw new Error("Error subiendo " + file.name);
+          completadas++;
+          mensajes.innerHTML = `📤 Subiendo foto ${completadas} de ${total}...`;
+        })
+        .catch(e => {
+          console.error("Error:", e);
+        });
+      });
 
-          if (!res.ok) {
-            console.error("Falló la subida de una imagen:", file.name);
-          }
-        } catch (e) {
-          console.error("Error de red al subir una imagen:", file.name, e);
-        }
-
-        completadas++;
-        mensajes.innerHTML = `📤 Subiendo foto ${completadas} de ${total}...`;
-      }
+      await Promise.all(subidas);
 
       mensajes.innerHTML = "✅ Fotos subidas. ¡Pulsa en Ver Galería!";
     }
