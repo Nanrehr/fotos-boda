@@ -9,6 +9,33 @@ from PIL import Image
 from PIL.ExifTags import TAGS
 import re
 
+import logging
+
+# Activamos log en archivo
+logging.basicConfig(filename="uploads.log", level=logging.INFO, format='%(message)s')
+
+# Función para guardar la información en un log
+def registrar_subida(ip, filename, categoria, agente):
+    linea = f"{datetime.now().isoformat()} | IP: {ip} | Archivo: {filename} | Categoría: {categoria} | Navegador: {agente}"
+    logging.info(linea)
+
+# Función para estimar la categoría basándonos en la fecha EXIF
+def obtener_categoria(dt):
+    tz = pytz.timezone('Europe/Madrid')
+    dt = tz.localize(dt)
+    segmentos = [
+        ("PreBoda",           tz.localize(datetime(2025, 7, 1, 0, 0)), tz.localize(datetime(2025, 7, 19, 8, 59))),
+        ("PreparaciónBoda",  tz.localize(datetime(2025, 7, 19, 9, 0)), tz.localize(datetime(2025, 7, 19, 18, 40))),
+        ("Ceremonia",        tz.localize(datetime(2025, 7, 19, 18, 40, 1)), tz.localize(datetime(2025, 7, 19, 20, 20))),
+        ("Coctel",           tz.localize(datetime(2025, 7, 19, 20, 20, 1)), tz.localize(datetime(2025, 7, 19, 22, 30))),
+        ("Banquete",         tz.localize(datetime(2025, 7, 19, 22, 30, 1)), tz.localize(datetime(2025, 7, 20, 3, 0))),
+        ("Fiesta",           tz.localize(datetime(2025, 7, 20, 3, 0, 1)), tz.localize(datetime(2025, 7, 20, 10, 0))),
+    ]
+    for nombre, inicio, fin in segmentos:
+        if inicio <= dt < fin:
+            return nombre
+    return "Desconocida"
+
 app = Flask(__name__)
 app.secret_key = 'fotos-boda-mar-jc-secret'
 
@@ -47,8 +74,7 @@ def upload():
             exif_data = img._getexif()
             if exif_data:
                 for tag, value in exif_data.items():
-                    decoded = TAGS.get(tag, tag)
-                    if decoded == 'DateTimeOriginal':
+                    if TAGS.get(tag) == 'DateTimeOriginal':
                         exif_date = datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
                         break
         except Exception as ex:
@@ -76,12 +102,27 @@ def upload():
             }
         )
 
+        # REGISTRO NUEVO
+        ip = request.remote_addr
+        user_agent = request.headers.get('User-Agent')
+        categoria = obtener_categoria(exif_date) if exif_date else "Desconocida"
+        registrar_subida(ip, filename, categoria, user_agent)
+
         print(f"Subida: {filename}")
         return '', 200
 
     except Exception as e:
         print(f"Error al subir: {str(e)}")
         return f'Error al subir: {str(e)}', 500
+
+@app.route('/registros')
+def ver_registros():
+    try:
+        with open("uploads.log", "r") as f:
+            lineas = f.readlines()
+        return "<br>".join(lineas[-100:])  # Muestra solo las últimas 100
+    except Exception as e:
+        return f"No se pudo leer el log: {str(e)}"
 
 @app.route('/gallery')
 def gallery():
