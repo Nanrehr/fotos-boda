@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>📄 Registros de Subidas</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 2rem;
+      background: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    th, td {
+      padding: 0.8rem;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #667eea;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f0f4ff;
+    }
+    .volver {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 0.6rem 1.2rem;
+      background: #805ad5;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>📄 Registros de Fotos Subidas</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>🕒 Fecha</th>
+        <th>📍 IP</th>
+        <th>🖼️ Archivo</th>
+        <th>📂 Categoría</th>
+        <th>🧭 Navegador</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in registros %}
+        <tr>
+          <td>{{ r.fecha }}</td>
+          <td>{{ r.ip }}</td>
+          <td>{{ r.archivo }}</td>
+          <td>{{ r.categoria }}</td>
+          <td>{{ r.navegador }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="text-align:center">
+    <a class="volver" href="/">← Volver</a>
+  </div>
+</body>
+</html>
