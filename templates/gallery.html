@@ -1,3 +1,4 @@
+<!-- gallery.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5,8 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>🖼️ Galería – Boda Mar & Juan Carlos</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
+    * {margin: 0; padding: 0; box-sizing: border-box;}
     body {
       font-family: 'Segoe UI', sans-serif;
       background: url("/static/fondo-boda.jpg") no-repeat center center fixed;
@@ -14,29 +14,18 @@
       padding: 2rem 1rem;
       color: #2d3748;
     }
-
     .header {
       background: rgba(255,255,255,0.7);
       border-radius: 20px;
       padding: 2rem;
       max-width: 600px;
-      margin: 0 auto 1.5rem;
+      margin: 0 auto 2rem;
       text-align: center;
       box-shadow: 0 20px 40px rgba(0,0,0,.1);
     }
-
-    .heart {
-      font-size: 2.5rem;
-      animation: beat 2s infinite both;
-      margin-bottom: 1rem;
-    }
-
-    @keyframes beat {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
-
-    h1 { margin-bottom: .5rem; }
+    h1 {margin-bottom: .5rem;}
+    .heart {font-size: 2.5rem; animation: beat 2s infinite both; margin-bottom: 1rem;}
+    @keyframes beat {0%, 100% {transform: scale(1);} 50% {transform: scale(1.1);}}
 
     .btn {
       padding: .7rem 1.4rem;
@@ -54,48 +43,41 @@
       text-decoration: none;
     }
 
-    .category-info {
-      font-size: 1rem;
-      color: #333;
+    .categorias {
       margin-top: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .6rem;
+      justify-content: center;
     }
-
-    .category-buttons {
-      text-align: center;
-      margin-top: 0.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .category-buttons button {
-      background: #764ba2;
+    .cat-btn {
+      background: #805ad5;
       color: white;
+      padding: .5rem 1rem;
+      border-radius: 20px;
       border: none;
-      padding: 0.5rem 1rem;
-      margin: 0.2rem;
-      border-radius: 16px;
+      font-weight: bold;
       cursor: pointer;
-      font-size: 0.95rem;
     }
 
-    .selected-category {
+    .info-categoria {
       text-align: center;
       font-size: 1.3rem;
       color: white;
+      background: rgba(0, 0, 0, 0.3);
       margin-bottom: 1rem;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 0.5rem 1rem;
-      border-radius: 14px;
+      padding: .3rem 1rem;
+      border-radius: 12px;
       display: none;
     }
 
     .gallery {
-      display: grid;
+      display: none;
       gap: .8rem;
       grid-template-columns: repeat(auto-fill, minmax(48%, 1fr));
       max-width: 1000px;
       margin: 0 auto;
     }
-
     @media(min-width: 600px) {
       .gallery {
         grid-template-columns: repeat(auto-fill, minmax(30%, 1fr));
@@ -108,33 +90,11 @@
       box-shadow: 0 6px 18px rgba(0,0,0,.08);
       cursor: pointer;
     }
-
     .photo img {
       width: 100%;
       height: 160px;
       object-fit: cover;
       display: block;
-    }
-
-    .pagination {
-      text-align: center;
-      margin-top: 1.5rem;
-    }
-
-    .pagination-info {
-      color: white;
-      font-size: 1rem;
-      margin-bottom: 0.4rem;
-    }
-
-    .pagination button {
-      margin: 0 4px;
-      padding: 0.4rem 0.9rem;
-      border-radius: 10px;
-      border: none;
-      background: #667eea;
-      color: white;
-      cursor: pointer;
     }
 
     .modal {
@@ -149,12 +109,33 @@
       justify-content: center;
       align-items: center;
     }
-
     .modal img {
       max-width: 90vw;
       max-height: 90vh;
       border-radius: 10px;
       box-shadow: 0 0 20px rgba(255,255,255,0.2);
+    }
+
+    .paginacion {
+      margin: 2rem auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: .4rem;
+      flex-wrap: wrap;
+      color: white;
+    }
+    .paginacion button {
+      background: #667eea;
+      border: none;
+      padding: .4rem .8rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+    }
+    .paginacion .activo {
+      background: #4c51bf;
     }
   </style>
 </head>
@@ -164,42 +145,38 @@
     <h1>Galería de Fotos</h1>
     <a href="/" class="btn">📷 Subir Más Fotos</a>
 
-    <p class="category-info">Selecciona una categoría para ver las fotos:</p>
-    <div class="category-buttons">
-      {% for categoria, lista in fotos_por_categoria.items() if lista %}
-        <button onclick="mostrarCategoria('{{ categoria }}')">{{ categoria }}</button>
+    <p style="margin-top: 1.5rem; font-weight: bold;">Selecciona una categoría para ver las fotos:</p>
+    <div class="categorias">
+      {% for cat in fotos_por_categoria %}
+        <button class="cat-btn" onclick="mostrarCategoria('{{ cat }}')">{{ cat }}</button>
       {% endfor %}
     </div>
   </section>
 
-  <div id="selectedCategory" class="selected-category"></div>
+  <p id="selectedCategory" class="info-categoria"></p>
 
   {% for categoria, lista in fotos_por_categoria.items() %}
-    {% if lista %}
-      <section class="gallery" id="cat-{{ categoria }}" style="display:none;">
-        {% for foto in lista %}
-          <div class="photo">
-            <img src="{{ foto }}" alt="Foto de boda" onclick="verFoto('{{ foto }}')">
-          </div>
-        {% endfor %}
-      </section>
-    {% endif %}
+    <section class="gallery" id="cat-{{ categoria }}">
+      {% for foto in lista %}
+        <div class="photo" onclick="verFoto('{{ foto }}')">
+          <img src="{{ foto }}" alt="Foto de boda">
+        </div>
+      {% endfor %}
+    </section>
   {% endfor %}
-
-  <div class="pagination" id="pagination">
-    <div class="pagination-info" id="paginationText"></div>
-    <!-- Botones se insertan desde JS -->
-  </div>
 
   <div class="modal" id="modal" onclick="cerrarModal()">
     <img id="modalImg" src="">
   </div>
 
+  <div id="paginacion" class="paginacion"></div>
+
   <script>
-    let fotosPorPagina = 6;
+    let categoriaActual = null;
     let paginaActual = 1;
-    let categoriaActual = "";
+    const fotosPorPagina = 6;
     let todasFotos = [];
+    const fotosPorCategoria = {};
 
     function mostrarCategoria(cat) {
       document.querySelectorAll('.gallery').forEach(g => g.style.display = 'none');
@@ -209,13 +186,17 @@
       categoriaActual = cat;
       paginaActual = 1;
 
-      // Mostrar nombre de categoría
+      // Mostrar texto de categoría
       const info = document.getElementById('selectedCategory');
       info.textContent = `Categoría: ${cat}`;
       info.style.display = 'block';
 
-      // Obtener todas las fotos de la categoría
-      todasFotos = Array.from(galeria.querySelectorAll('.photo'));
+      // Guardar las fotos (solo la primera vez)
+      if (!fotosPorCategoria[cat]) {
+        fotosPorCategoria[cat] = Array.from(galeria.querySelectorAll('.photo'));
+      }
+
+      todasFotos = fotosPorCategoria[cat];
       galeria.innerHTML = '';
       galeria.style.display = 'grid';
 
@@ -230,20 +211,25 @@
       const fin = inicio + fotosPorPagina;
       const fotosPagina = todasFotos.slice(inicio, fin);
 
-      fotosPagina.forEach(f => galeria.appendChild(f));
+      fotosPagina.forEach(foto => galeria.appendChild(foto.cloneNode(true)));
 
+      mostrarPaginacion();
+    }
+
+    function mostrarPaginacion() {
       const totalPaginas = Math.ceil(todasFotos.length / fotosPorPagina);
-      const paginador = document.getElementById('pagination');
-      const texto = document.getElementById('paginationText');
-
-      texto.innerText = `Página ${paginaActual} de ${totalPaginas}`;
-      paginador.querySelectorAll('button').forEach(b => b.remove());
+      const paginacion = document.getElementById('paginacion');
+      paginacion.innerHTML = `Página ${paginaActual} de ${totalPaginas}<br/>`;
 
       for (let i = 1; i <= totalPaginas; i++) {
         const btn = document.createElement('button');
         btn.textContent = i;
-        btn.onclick = () => { paginaActual = i; mostrarPagina(); };
-        paginador.appendChild(btn);
+        btn.onclick = () => {
+          paginaActual = i;
+          mostrarPagina();
+        };
+        if (i === paginaActual) btn.classList.add('activo');
+        paginacion.appendChild(btn);
       }
     }
 
@@ -256,11 +242,6 @@
 
     function cerrarModal() {
       document.getElementById('modal').style.display = 'none';
-    }
-
-    window.onload = () => {
-      const primero = document.querySelector('.category-buttons button');
-      if (primero) primero.click();
     }
   </script>
 </body>
