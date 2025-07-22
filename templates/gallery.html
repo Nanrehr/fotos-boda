@@ -54,10 +54,16 @@
       text-decoration: none;
     }
 
+    .category-info {
+      font-size: 1rem;
+      color: #333;
+      margin-top: 1.5rem;
+    }
+
     .category-buttons {
       text-align: center;
-      margin-top: 1rem;
-      margin-bottom: 2rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
     }
 
     .category-buttons button {
@@ -104,6 +110,12 @@
       margin-top: 1.5rem;
     }
 
+    .pagination-info {
+      color: white;
+      font-size: 1rem;
+      margin-bottom: 0.4rem;
+    }
+
     .pagination button {
       margin: 0 4px;
       padding: 0.4rem 0.9rem;
@@ -140,6 +152,8 @@
     <div class="heart">Mar 💕 JC</div>
     <h1>Galería de Fotos</h1>
     <a href="/" class="btn">📷 Subir Más Fotos</a>
+
+    <p class="category-info">Selecciona una categoría para ver las fotos:</p>
     <div class="category-buttons">
       {% for categoria, lista in fotos_por_categoria.items() if lista %}
         <button onclick="mostrarCategoria('{{ categoria }}')">{{ categoria }}</button>
@@ -159,7 +173,10 @@
     {% endif %}
   {% endfor %}
 
-  <div class="pagination" id="pagination"></div>
+  <div class="pagination" id="pagination">
+    <div class="pagination-info" id="paginationText"></div>
+    <!-- Botones se insertan desde JS -->
+  </div>
 
   <div class="modal" id="modal" onclick="cerrarModal()">
     <img id="modalImg" src="">
@@ -197,10 +214,12 @@
 
       fotosPagina.forEach(f => galeria.appendChild(f));
 
-      // Paginación
       const totalPaginas = Math.ceil(todasFotos.length / fotosPorPagina);
       const paginador = document.getElementById('pagination');
-      paginador.innerHTML = '';
+      const texto = document.getElementById('paginationText');
+
+      texto.innerText = `Página ${paginaActual} de ${totalPaginas}`;
+      paginador.querySelectorAll('button').forEach(b => b.remove());
 
       for (let i = 1; i <= totalPaginas; i++) {
         const btn = document.createElement('button');
@@ -221,7 +240,6 @@
       document.getElementById('modal').style.display = 'none';
     }
 
-    // Cargar primera categoría al entrar
     window.onload = () => {
       const primero = document.querySelector('.category-buttons button');
       if (primero) primero.click();
