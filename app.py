@@ -2,24 +2,38 @@ from flask import Flask, render_template, request, redirect, flash
 import boto3
 import os
 from werkzeug.utils import secure_filename
-from io import BytesIO
 from datetime import datetime
 import pytz
 from PIL import Image
 from PIL.ExifTags import TAGS
+import logging
 import re
 
-import logging
+# === Configuración de Flask ===
+app = Flask(__name__)
+app.secret_key = 'fotos-boda-mar-jc-secret'
 
-# Activamos log en archivo
+# === Configuración de AWS S3 ===
+BUCKET_NAME = os.environ.get('S3_BUCKET_NAME')
+REGION_NAME = os.environ.get('AWS_REGION')
+
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
+    region_name=REGION_NAME
+)
+
+# === Configuración de logs ===
 logging.basicConfig(filename="uploads.log", level=logging.INFO, format='%(message)s')
 
-# Función para guardar la información en un log
-def registrar_subida(ip, filename, categoria, agente):
-    linea = f"{datetime.now().isoformat()} | IP: {ip} | Archivo: {filename} | Categoría: {categoria} | Navegador: {agente}"
-    logging.info(linea)
+# === Extensiones permitidas ===
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'heic', 'webp'}
 
-# Función para estimar la categoría basándonos en la fecha EXIF
+# === Funciones auxiliares ===
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 def obtener_categoria(dt):
     tz = pytz.timezone('Europe/Madrid')
     dt = tz.localize(dt)
@@ -36,23 +50,11 @@ def obtener_categoria(dt):
             return nombre
     return "Desconocida"
 
-app = Flask(__name__)
-app.secret_key = 'fotos-boda-mar-jc-secret'
+def registrar_subida(ip, filename, categoria, agente):
+    linea = f"{datetime.now().isoformat()} | IP: {ip} | Archivo: {filename} | Categoría: {categoria} | Navegador: {agente}"
+    logging.info(linea)
 
-BUCKET_NAME = os.environ.get('S3_BUCKET_NAME')
-REGION_NAME = os.environ.get('AWS_REGION')
-
-s3 = boto3.client(
-    's3',
-    aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
-    aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
-    region_name=REGION_NAME
-)
-
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'heic', 'webp'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# === Rutas de la app ===
 
 @app.route('/')
 def home():
@@ -102,7 +104,6 @@ def upload():
             }
         )
 
-        # REGISTRO NUEVO
         ip = request.remote_addr
         user_agent = request.headers.get('User-Agent')
         categoria = obtener_categoria(exif_date) if exif_date else "Desconocida"
@@ -115,42 +116,16 @@ def upload():
         print(f"Error al subir: {str(e)}")
         return f'Error al subir: {str(e)}', 500
 
-@app.route('/registros')
-def ver_registros():
-    registros = []
-    try:
-        with open("uploads.log", "r") as f:
-            lineas = f.readlines()
-
-        for linea in lineas[-100:]:  # Las últimas 100
-            partes = linea.strip().split(" | ")
-            if len(partes) == 5:
-                fecha = partes[0]
-                ip = partes[1].replace("IP: ", "")
-                archivo = partes[2].replace("Archivo: ", "")
-                categoria = partes[3].replace("Categoría: ", "")
-                navegador = partes[4].replace("Navegador: ", "")
-                registros.append({
-                    "fecha": fecha,
-                    "ip": ip,
-                    "archivo": archivo,
-                    "categoria": categoria,
-                    "navegador": navegador
-                })
-        return render_template("registros.html", registros=registros)
-    except Exception as e:
-        return f"<p>Error al leer el log: {str(e)}</p>"
-        
 @app.route('/gallery')
 def gallery():
     try:
         tz = pytz.timezone('Europe/Madrid')
         segmentos_definidos = [
             ("PreBoda",           tz.localize(datetime(2025, 7, 1, 0, 0)), tz.localize(datetime(2025, 7, 19, 8, 59))),
-            ("PreparaciónBoda",  tz.localize(datetime(2025, 7, 19, 9, 0)), tz.localize(datetime(2025, 7, 19, 18, 40, 0))),
-            ("Ceremonia",        tz.localize(datetime(2025, 7, 19, 18, 40, 1)), tz.localize(datetime(2025, 7, 19, 20, 20, 0))),
-            ("Coctel",           tz.localize(datetime(2025, 7, 19, 20, 20, 1)), tz.localize(datetime(2025, 7, 19, 22, 30, 0))),
-            ("Banquete",         tz.localize(datetime(2025, 7, 19, 22, 30, 1)), tz.localize(datetime(2025, 7, 20, 3, 0, 0))),
+            ("PreparaciónBoda",  tz.localize(datetime(2025, 7, 19, 9, 0)), tz.localize(datetime(2025, 7, 19, 18, 40))),
+            ("Ceremonia",        tz.localize(datetime(2025, 7, 19, 18, 40, 1)), tz.localize(datetime(2025, 7, 19, 20, 20))),
+            ("Coctel",           tz.localize(datetime(2025, 7, 19, 20, 20, 1)), tz.localize(datetime(2025, 7, 19, 22, 30))),
+            ("Banquete",         tz.localize(datetime(2025, 7, 19, 22, 30, 1)), tz.localize(datetime(2025, 7, 20, 3, 0))),
             ("Fiesta",           tz.localize(datetime(2025, 7, 20, 3, 0, 1)), tz.localize(datetime(2025, 7, 20, 10, 0))),
         ]
 
@@ -179,3 +154,30 @@ def gallery():
         print(f"Error al cargar galería: {str(e)}")
         flash(f'Error al cargar la galería: {str(e)}', 'error')
         return redirect('/')
+
+@app.route('/registros')
+def ver_registros():
+    registros = []
+    try:
+        with open("uploads.log", "r") as f:
+            lineas = f.readlines()
+
+        for linea in lineas[-100:]:
+            partes = linea.strip().split(" | ")
+            if len(partes) == 5:
+                fecha = partes[0]
+                ip = partes[1].replace("IP: ", "")
+                archivo = partes[2].replace("Archivo: ", "")
+                categoria = partes[3].replace("Categoría: ", "")
+                navegador = partes[4].replace("Navegador: ", "")
+                registros.append({
+                    "fecha": fecha,
+                    "ip": ip,
+                    "archivo": archivo,
+                    "categoria": categoria,
+                    "navegador": navegador
+                })
+        return render_template("registros.html", registros=registros)
+
+    except Exception as e:
+        return f"<p>Error al leer el log: {str(e)}</p>"
