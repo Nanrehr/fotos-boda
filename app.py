@@ -34,57 +34,49 @@ def home():
 @app.route('/upload', methods=['POST'])
 def upload():
     try:
-        if 'fotos' not in request.files:
-            return 'No se recibieron archivos', 400
+        f = request.files.get('fotos')
+        if not f or not allowed_file(f.filename):
+            return 'Archivo no permitido', 400
 
-        files = request.files.getlist('fotos')
-        uploaded = 0
-        skipped = 0
+        filename = secure_filename(f.filename)
+        file_extension = filename.rsplit('.', 1)[1].lower()
+        exif_date = None
 
-        for f in files:
-            if not f.filename or not allowed_file(f.filename):
-                continue
+        try:
+            img = Image.open(f.stream)
+            exif_data = img._getexif()
+            if exif_data:
+                for tag, value in exif_data.items():
+                    decoded = TAGS.get(tag, tag)
+                    if decoded == 'DateTimeOriginal':
+                        exif_date = datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
+                        break
+        except Exception as ex:
+            print("No EXIF:", ex)
 
-            filename = secure_filename(f.filename)
-            file_extension = filename.rsplit('.', 1)[1].lower()
-            exif_date = None
+        if exif_date:
+            fecha_str = exif_date.strftime("%Y%m%d_%H%M%S")
+            filename = f"{fecha_str}_{filename}"
 
-            try:
-                img = Image.open(f.stream)
-                exif_data = img._getexif()
-                if exif_data:
-                    for tag, value in exif_data.items():
-                        decoded = TAGS.get(tag, tag)
-                        if decoded == 'DateTimeOriginal':
-                            exif_date = datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
-                            break
-            except Exception as ex:
-                print("No EXIF:", ex)
+        try:
+            s3.head_object(Bucket=BUCKET_NAME, Key=filename)
+            print(f"Duplicada: {filename}")
+            return '', 200
+        except:
+            pass
 
-            if exif_date:
-                fecha_str = exif_date.strftime("%Y%m%d_%H%M%S")
-                filename = f"{fecha_str}_{filename}"
+        f.stream.seek(0)
+        s3.upload_fileobj(
+            f,
+            BUCKET_NAME,
+            filename,
+            ExtraArgs={
+                'ContentType': f'image/{file_extension}',
+                'CacheControl': 'max-age=86400'
+            }
+        )
 
-            try:
-                s3.head_object(Bucket=BUCKET_NAME, Key=filename)
-                skipped += 1
-                continue
-            except:
-                pass
-
-            f.stream.seek(0)
-            s3.upload_fileobj(
-                f,
-                BUCKET_NAME,
-                filename,
-                ExtraArgs={
-                    'ContentType': f'image/{file_extension}',
-                    'CacheControl': 'max-age=86400'
-                }
-            )
-            uploaded += 1
-
-        print(f"Subidas: {uploaded}, Duplicadas: {skipped}")
+        print(f"Subida: {filename}")
         return '', 200
 
     except Exception as e:
@@ -97,11 +89,11 @@ def gallery():
         tz = pytz.timezone('Europe/Madrid')
         segmentos_definidos = [
             ("PreBoda",           tz.localize(datetime(2025, 7, 1, 0, 0)), tz.localize(datetime(2025, 7, 19, 8, 59))),
-            ("PreparaciónBoda",   tz.localize(datetime(2025, 7, 19, 9, 0)), tz.localize(datetime(2025, 7, 19, 18, 40, 0))),
-            ("Ceremonia",         tz.localize(datetime(2025, 7, 19, 18, 40, 1)), tz.localize(datetime(2025, 7, 19, 20, 20, 0))),
-            ("Coctel",            tz.localize(datetime(2025, 7, 19, 20, 20, 1)), tz.localize(datetime(2025, 7, 19, 22, 30, 0))),
-            ("Banquete",          tz.localize(datetime(2025, 7, 19, 22, 30, 1)), tz.localize(datetime(2025, 7, 20, 3, 0, 0))),
-            ("Fiesta",            tz.localize(datetime(2025, 7, 20, 3, 0, 1)), tz.localize(datetime(2025, 7, 20, 10, 0))),
+            ("PreparaciónBoda",  tz.localize(datetime(2025, 7, 19, 9, 0)), tz.localize(datetime(2025, 7, 19, 18, 40, 0))),
+            ("Ceremonia",        tz.localize(datetime(2025, 7, 19, 18, 40, 1)), tz.localize(datetime(2025, 7, 19, 20, 20, 0))),
+            ("Coctel",           tz.localize(datetime(2025, 7, 19, 20, 20, 1)), tz.localize(datetime(2025, 7, 19, 22, 30, 0))),
+            ("Banquete",         tz.localize(datetime(2025, 7, 19, 22, 30, 1)), tz.localize(datetime(2025, 7, 20, 3, 0, 0))),
+            ("Fiesta",           tz.localize(datetime(2025, 7, 20, 3, 0, 1)), tz.localize(datetime(2025, 7, 20, 10, 0))),
         ]
 
         fotos_por_categoria = {nombre: [] for nombre, _, _ in segmentos_definidos}
@@ -121,7 +113,7 @@ def gallery():
                 for nombre, inicio, fin in segmentos_definidos:
                     if inicio <= fecha < fin:
                         fotos_por_categoria[nombre].append(url)
-                        break  # ✅ No añadimos a "Sin Clasificar" si no encaja
+                        break
 
         return render_template('gallery.html', fotos_por_categoria=fotos_por_categoria)
 
