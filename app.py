@@ -51,7 +51,9 @@ def obtener_categoria(dt):
     return "Desconocida"
 
 def registrar_subida(ip, filename, categoria, agente):
-    linea = f"{datetime.now().isoformat()} | IP: {ip} | Archivo: {filename} | Categoría: {categoria} | Navegador: {agente}"
+    tz = pytz.timezone('Europe/Madrid')
+    hora_local = datetime.now(tz).isoformat()
+    linea = f"{hora_local} | IP: {ip} | Archivo: {filename} | Categoría: {categoria} | Navegador: {agente}"
     logging.info(linea)
 
 # === Rutas de la app ===
