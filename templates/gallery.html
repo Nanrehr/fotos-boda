@@ -159,7 +159,7 @@
     <section class="gallery" id="cat-{{ categoria }}">
       {% for foto in lista %}
         <div class="photo" onclick="verFoto('{{ foto }}')">
-          <img src="{{ foto }}" alt="Foto de boda">
+            <img src="{{ foto }}" alt="Foto de boda" loading="lazy">
         </div>
       {% endfor %}
     </section>
