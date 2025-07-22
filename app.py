@@ -117,13 +117,30 @@ def upload():
 
 @app.route('/registros')
 def ver_registros():
+    registros = []
     try:
         with open("uploads.log", "r") as f:
             lineas = f.readlines()
-        return "<br>".join(lineas[-100:])  # Muestra solo las últimas 100
-    except Exception as e:
-        return f"No se pudo leer el log: {str(e)}"
 
+        for linea in lineas[-100:]:  # Las últimas 100
+            partes = linea.strip().split(" | ")
+            if len(partes) == 5:
+                fecha = partes[0]
+                ip = partes[1].replace("IP: ", "")
+                archivo = partes[2].replace("Archivo: ", "")
+                categoria = partes[3].replace("Categoría: ", "")
+                navegador = partes[4].replace("Navegador: ", "")
+                registros.append({
+                    "fecha": fecha,
+                    "ip": ip,
+                    "archivo": archivo,
+                    "categoria": categoria,
+                    "navegador": navegador
+                })
+        return render_template("registros.html", registros=registros)
+    except Exception as e:
+        return f"<p>Error al leer el log: {str(e)}</p>"
+        
 @app.route('/gallery')
 def gallery():
     try:
