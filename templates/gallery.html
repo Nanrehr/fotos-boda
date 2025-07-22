@@ -77,6 +77,17 @@
       font-size: 0.95rem;
     }
 
+    .selected-category {
+      text-align: center;
+      font-size: 1.3rem;
+      color: white;
+      margin-bottom: 1rem;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 0.5rem 1rem;
+      border-radius: 14px;
+      display: none;
+    }
+
     .gallery {
       display: grid;
       gap: .8rem;
@@ -161,6 +172,8 @@
     </div>
   </section>
 
+  <div id="selectedCategory" class="selected-category"></div>
+
   {% for categoria, lista in fotos_por_categoria.items() %}
     {% if lista %}
       <section class="gallery" id="cat-{{ categoria }}" style="display:none;">
@@ -195,6 +208,11 @@
 
       categoriaActual = cat;
       paginaActual = 1;
+
+      // Mostrar nombre de categoría
+      const info = document.getElementById('selectedCategory');
+      info.textContent = `Categoría: ${cat}`;
+      info.style.display = 'block';
 
       // Obtener todas las fotos de la categoría
       todasFotos = Array.from(galeria.querySelectorAll('.photo'));
